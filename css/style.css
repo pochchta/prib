@@ -1,0 +1,14 @@
+.header{
+	overflow: hidden;
+}
+.header .name{
+	float: left;
+}
+.header .links{
+	float: right;
+	font-size: 0;
+}
+.header .links a{
+	margin-left: 10px;
+	font-size: 16px;
+}
