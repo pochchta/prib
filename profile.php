@@ -1,5 +1,5 @@
 <?php 
-$title = 'Главная страница';
+$title = 'Профиль';
 include 'model.php';
 
 include 'tpl/head.html';
@@ -8,6 +8,6 @@ if ( $_SESSION['logged_user']->login != 'guest' ) {
 } else {
     include 'tpl/header/guest.html';
 }
-//include 'tpl/body/one.html';
-include 'tpl/footer.html'
+include 'tpl/body/profile.html';
+include 'tpl/footer.html';
 ?>

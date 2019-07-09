@@ -1,8 +1,7 @@
 <div class="header">
-    <div class="name">
-        Главная страница
-    </div>
+    <div class="name"><?php echo $title ?></div>
     <div class="links">
+    	<a href="index.php">Главная</a>
         <a href="profile.php"><?php echo $_SESSION['logged_user']->login ?></a>
         <a href="logout.php">Выйти</a>
     </div>

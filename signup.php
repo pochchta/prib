@@ -1,5 +1,6 @@
 <?php 
-	require 'db.php';
+	//require 'db.php';
+	include 'model.php';	
 
 	$data = $_POST;
 	$message;

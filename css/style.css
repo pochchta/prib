@@ -1,5 +1,19 @@
+*, html, body{
+
+}
+.ok{
+	color: green;
+}
+.error{
+	color: red;
+}
+.none{
+	display: none;
+}
 .header{
 	overflow: hidden;
+	height: 70px;
+    background-color: #F1F1F3;	
 }
 .header .name{
 	float: left;
