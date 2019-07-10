@@ -1,0 +1,19 @@
+<form action="/signup.php" method="POST">
+	<p>Имя пользователя</p>
+	<input type="text" name="login">
+	<p>Роль пользователя</p>
+	<select name="role">
+		<!-- <option disabled selected="selected">нажмите для выбора</option> -->
+		<option value="A">Администратор</option>
+		<option value="W">Редактирование</option>
+		<option value="R" selected>Чтение</option>
+	</select>
+	<p>Пароль</p>
+	<input type="password" name="password">
+	<p>
+		<button type="submit" name="do_signup">Зарегистрироваться</button>
+	</p>
+</form>
+<hr>
+<div class='<?php echo $message_class ?>'><?php echo $message ?></div>
+	

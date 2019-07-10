@@ -17,10 +17,12 @@
 }
 .header .name{
 	float: left;
+    margin: 10px;
 }
 .header .links{
 	float: right;
 	font-size: 0;
+    margin: 10px;
 }
 .header .links a{
 	margin-left: 10px;
