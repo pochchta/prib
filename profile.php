@@ -8,7 +8,12 @@ if ( isset($_SESSION['logged_user']) ) {
 } else {
     include 'tpl/header/guest.html';
 }
-var_dump(mb_strlen('Федор Васильевич 12 abcde' , 'UTF-8'));
 include 'tpl/body/profile.html';
+
+echo '<hr>Список пользователей:<br>';
+// var_dump(10);
+// var_dump(check_numeric('p'));
+read_users(1);
+
 include 'tpl/footer.html';
 ?>

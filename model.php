@@ -7,9 +7,20 @@ include 'libs/phpqrcode/qrlib.php';		// https://github.com/t0k4rt/phpqrcode
 // inic_session();
 session_start();
 
+//----------------------------------------константы---------------------------------------
 define("LOGIN_LIMIT", 60, true);
 define("PASSWORD_LIMIT", 60, true);
 define("ROLE_LIMIT", 1, true);
+define("USERS_LIMIT", 999999999999, true);	// количество юзеров в системе
+$arr_users_limit = array(3,20,30,50);   // массивы констант с php 5.6
+$arr_name_role = array(
+	'A' => 'Администратор',
+	'R' => 'Чтение',
+	'W' => 'Редактирование'
+);
+
+
+
 
 //QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 
@@ -91,13 +102,20 @@ function registering_user($data){		// регистрация (POST на вход
 		$user->login = $data['login'];
 		$user->role = $data['role'];
 		$user->password = hash( 'SHA256' , $data['password'] );
-		R::store($user);
-		$out['ok'] = true;
-		$out['login'] = $data['login'];
+		R::begin();
+		try{
+			R::store($user);
+			R::commit();
+			$out['ok'] = true;
+			$out['login'] = $data['login'];
+		}catch (Exception $e){
+			R::rollback();
+			$out['errors'][] = 'Нет связи';
+			// echo $e->getMessage();
+		}
 	}
 	return $out;
 }
-
 function check_symbol( $s ) {		// проверка на содержание только букв и цифр
     $s = preg_replace( "/[a-zA-ZА-Яа-яЁё0-9]/u", '', $s );
     $out = false;
@@ -109,4 +127,37 @@ function check_role( $s ) {		// проверка на содержание то�
     if  ( preg_match( "/[AWR]/", $s ) ) $out = true;
     return $out;
 }
+
+function read_users( $role ){
+	global $arr_users_limit;
+	$page = 0;
+	$count = R::count('users');
+	if ( check_numeric_get('p') ) {
+		if ( $arr_users_limit[0] * $_GET['p'] < USERS_LIMIT) $page = $_GET['p'];
+	}	
+	$start = $page * $arr_users_limit[0];
+	$users = R::findAll('users', "ORDER BY id ASC LIMIT {$start},{$arr_users_limit[0]}");
+	echo '<hr>';
+	foreach ($users as $user){
+ 	 	echo $user->login.'<br>';
+	}
+	echo '<hr>';
+	if ($page > 0) echo "<a href='?p=".($page-1)."'>назад</a><span> </span>";
+	else echo "<a>назад</a><span> </span>";
+
+	echo "<span> $page </span>";
+
+	if ( $count / $arr_users_limit[0] > $page + 1 ) echo " <a href='?p=".($page+1)."'>вперед</a><span> </span>";
+	else echo " <a>вперед</a><span> </span>";
+}
+function check_numeric_get( $name_param ){		// проверка что параметр - это число в GET массиве (на вход название параметра)
+	$out = false;
+	if ( isset($_GET[$name_param]) ){
+		if ( is_numeric($_GET[$name_param]) && ($_GET[$name_param] > 0) ){
+			$out = true;
+		}
+	}
+	return $out;
+}
+
 ?>
