@@ -1,4 +1,34 @@
 <div>Имя пользователя: <?php echo $_SESSION['logged_user']->login ?></div>
 <div>Роль пользователя: <?php echo $arr_name_role[$_SESSION['logged_user']->role] ?></div>
 <!-- <hr> -->
-<a href="profile.php?p=users">Пользователи</a>
+<!-- <a href="profile.php?p=users">Пользователи</a> -->
+
+
+
+<hr>
+Список пользователей:
+<?php echo "({$_SESSION['settings']->users_limit} на странице)"?>
+<br>
+
+<div class="users table">
+	<?php
+		foreach ($info['users'] as $user){
+			echo "<div class='tr'>";
+	    	echo "<div class='user td'>{$user->login}</div><div class='role td'>{$arr_name_role[$user->role]}</div>";
+	    	echo "<div class='state td'></div>";
+	    	echo "<div class='td'><a href='?off={$user->id}'>отключить</a></div>";
+	    	echo "<div class='td'><a href='?del={$user->id}'>удалить</a></div>";
+		    echo "</div>";
+		}
+	?>
+</div>
+<!-- <hr> -->
+<div class="navi">
+	<?php
+		echo "<a {$info['prev']}>назад</a><span>{$info['curr']}</span><a {$info['next']}>вперед</a><br>";
+		foreach ($arr_users_limit as $limit){
+	   		echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
+		}
+	?>
+</div>
+

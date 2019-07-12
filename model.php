@@ -6,39 +6,32 @@ if( ! R::testConnection() ) die('No DB connection!');
 include 'libs/phpqrcode/qrlib.php';		// https://github.com/t0k4rt/phpqrcode
 // inic_session();
 session_start();
+if ( empty($_SESSION['settings']) ) {
+	$_SESSION['settings'] = new user_settings;
+}
 
 //----------------------------------------константы---------------------------------------
 define("LOGIN_LIMIT", 60, true);
 define("PASSWORD_LIMIT", 60, true);
 define("ROLE_LIMIT", 1, true);
 define("USERS_LIMIT", 999999999999, true);	// количество юзеров в системе
-$arr_users_limit = array(3,20,30,50);   // массивы констант с php 5.6
+$arr_users_limit = array(3,5,10,20);   // массивы констант с php 5.6
 $arr_name_role = array(
 	'A' => 'Администратор',
 	'R' => 'Чтение',
 	'W' => 'Редактирование'
 );
 
-
-
-
 //QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 
-// class user_info{
-// 	var $login;
-// 	var $role;
-// 	function user_info() {
-// 		$this->login = 'guest';
-// 		$this->role = 'guest';
-// 	}
-// }
-
-// function inic_session(){
-// 	session_start();
-// 	if ( ! isset($_SESSION['logged_user']) ) {
-// 		$_SESSION['logged_user'] = new user_info;
-// 	}
-// }
+class user_settings{
+	var $users_limit;
+	var $data_limit;
+	function user_info() {
+		$this->users_limit = $arr_users_limit[0];
+		$this->data_limit = 30;
+	}
+}
 
 function logging_user($data){	// аутентификация (POST на вход)
 	$errors = array();
@@ -127,33 +120,33 @@ function check_role( $s ) {		// проверка на содержание то�
     if  ( preg_match( "/[AWR]/", $s ) ) $out = true;
     return $out;
 }
-
-function read_users( $role ){
-	global $arr_users_limit;
-	$page = 0;
-	$count = R::count('users');
-	if ( check_numeric_get('p') ) {
-		if ( $arr_users_limit[0] * $_GET['p'] < USERS_LIMIT) $page = $_GET['p'];
-	}	
-	$start = $page * $arr_users_limit[0];
-	$users = R::findAll('users', "ORDER BY id ASC LIMIT {$start},{$arr_users_limit[0]}");
-	echo '<hr>';
-	foreach ($users as $user){
- 	 	echo $user->login.'<br>';
+function del_user(){
+	if ( check_numeric_get('del') ) {
+		$user = R::findOne( 'users' , "id = $id"); 
+		var_dump($user);
 	}
-	echo '<hr>';
-	if ($page > 0) echo "<a href='?p=".($page-1)."'>назад</a><span> </span>";
-	else echo "<a>назад</a><span> </span>";
-
-	echo "<span> $page </span>";
-
-	if ( $count / $arr_users_limit[0] > $page + 1 ) echo " <a href='?p=".($page+1)."'>вперед</a><span> </span>";
-	else echo " <a>вперед</a><span> </span>";
 }
-function check_numeric_get( $name_param ){		// проверка что параметр - это число в GET массиве (на вход название параметра)
+function read_users(){
+	global $arr_users_limit;
+	if ( check_numeric_get('lu') ) {
+		if ( in_array($_GET['lu'], $arr_users_limit, true)) $_SESSION['settings']->users_limit = $_GET['lu'];
+	}	
+	$page = 0;
+	if ( check_numeric_get('p') ) {
+		if ( $_SESSION['settings']->users_limit * $_GET['p'] < USERS_LIMIT) $page = $_GET['p'];
+	}
+	$start = $page * $_SESSION['settings']->users_limit;
+	$out['users'] = R::findAll('users', "ORDER BY id ASC LIMIT {$start},{$_SESSION['settings']->users_limit}");
+	$count = R::count('users');	
+	if ($page > 0) 	$out['prev'] = "href='?p=".($page-1)."'";
+	$out['curr'] = $page;
+	if ( $count / $_SESSION['settings']->users_limit > $page + 1 ) $out['next'] = "href='?p=".($page+1)."'";
+	return $out;
+}
+function check_numeric_get( $name_param ){		// проверка параметр - целое полож. число в GET массиве (на вход название параметра)
 	$out = false;
 	if ( isset($_GET[$name_param]) ){
-		if ( is_numeric($_GET[$name_param]) && ($_GET[$name_param] > 0) ){
+		if ( is_numeric($_GET[$name_param]) && ($_GET[$name_param] > 0) && ($_GET[$name_param] == (int)$_GET[$name_param]) ){
 			$out = true;
 		}
 	}

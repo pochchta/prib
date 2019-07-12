@@ -8,12 +8,14 @@ if ( isset($_SESSION['logged_user']) ) {
 } else {
     include 'tpl/header/guest.html';
 }
+$info = read_users();
+del_user();
 include 'tpl/body/profile.html';
 
-echo '<hr>Список пользователей:<br>';
-// var_dump(10);
+
+ // var_dump($_GET['lu']);
 // var_dump(check_numeric('p'));
-read_users(1);
+
 
 include 'tpl/footer.html';
 ?>

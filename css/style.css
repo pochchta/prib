@@ -28,3 +28,34 @@
 	margin-left: 10px;
 	font-size: 16px;
 }
+
+.navi a,
+.navi span{
+	margin: 0 10px 0 0;	
+}
+.users{
+	overflow: hidden;
+}
+.users .user{
+	overflow: hidden;
+	padding: 0;
+}
+.users .role{
+
+}
+div.table{
+	display: table;
+}
+div.tr{
+	display: table-row;
+}
+div.td{
+	border-top: 1px solid gray;
+	display: table-cell;
+	/*width: 100%;*/
+	max-width: 18em;
+	padding-left: 15px;
+}
+div.tr:last-child .td{
+	border-bottom: 1px solid gray;
+}
