@@ -7,16 +7,29 @@
 
 <hr>
 Список пользователей:
-<?php echo "({$_SESSION['settings']->users_limit} на странице)"?>
+<?php echo "({$_SESSION['settings']->limit_users} на странице)"?>
+
 <br>
 
 <div class="users table">
+	<div class="tr">
+		<div class="user td">Имя</div>
+		<div class="td">Роль</div>
+		<div class="td"></div>
+		<div class="td"></div>
+		<div class="td"></div>
+	</div>
+		<td></td>
+		<td></td>
+
+	</tr>
 	<?php
 		foreach ($info['users'] as $user){
 			echo "<div class='tr'>";
-	    	echo "<div class='user td'>{$user->login}</div><div class='role td'>{$arr_name_role[$user->role]}</div>";
-	    	echo "<div class='state td'></div>";
-	    	echo "<div class='td'><a href='?off={$user->id}'>отключить</a></div>";
+	    	echo "<div class='user td {$user->state}'>{$user->login}</div>";
+	    	echo "<div class='role td {$user->state}'>{$arr_name_role[$user->role]}</div>";
+	    	echo "<div class='state td'>{$user->state}</div>";
+	    	echo "<div class='td'><a href='?st={$user->id}'>{$arr_name_state[$user->state]}</a></div>";
 	    	echo "<div class='td'><a href='?del={$user->id}'>удалить</a></div>";
 		    echo "</div>";
 		}
@@ -26,7 +39,7 @@
 <div class="navi">
 	<?php
 		echo "<a {$info['prev']}>назад</a><span>{$info['curr']}</span><a {$info['next']}>вперед</a><br>";
-		foreach ($arr_users_limit as $limit){
+		foreach ($arr_limit_users as $limit){
 	   		echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
 		}
 	?>

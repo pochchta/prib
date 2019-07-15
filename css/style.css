@@ -33,8 +33,9 @@
 .navi span{
 	margin: 0 10px 0 0;	
 }
-.users{
-	overflow: hidden;
+.users .off{
+	/*overflow: hidden;*/
+	text-decoration: line-through;
 }
 .users .user{
 	overflow: hidden;
@@ -55,6 +56,9 @@ div.td{
 	/*width: 100%;*/
 	max-width: 18em;
 	padding-left: 15px;
+}
+div.tr:first-child .td{
+	font-weight: 700;
 }
 div.tr:last-child .td{
 	border-bottom: 1px solid gray;
