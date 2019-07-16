@@ -63,3 +63,21 @@ div.tr:first-child .td{
 div.tr:last-child .td{
 	border-bottom: 1px solid gray;
 }
+
+.navi .sort select,
+.navi .sort p{
+	float: left;
+	margin: 0 10px 0 0;
+}
+.navi .sort input{
+	float: left;
+	margin: 5px 10px 0 0;
+}
+.navi .sort{
+	clear: both;
+	overflow: hidden;
+	margin-bottom: 5px;
+}
+.navi .sort input[type="text"]{
+	margin: 0 10px 0 0;
+	/*border: 1px solid #cccccc;*/

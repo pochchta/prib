@@ -17,6 +17,7 @@ define("LIMIT_PASSWORD", 60, true);
 define("LIMIT_ROLE", 1, true);
 define("LIMIT_USERS", 999999999999, true);	// количество юзеров в системе
 $arr_limit_users = array(3,5,10,20);   // массивы констант с php 5.6
+$arr_sort_users = array('id', 'login', 'role', 'state');
 $arr_name_role = array(
 	'A' => 'Администратор',
 	'R' => 'Чтение',
@@ -30,14 +31,22 @@ $arr_name_state = array(
 
 class user_settings{
 	var $limit_users;
-	var $limit_data;
+	//var $limit_data;
 	var $message;
 	var $out;
-	var $page;
+	var $page_users;
+	var $sort_users;
+	var $desc_users;
+	var $find_name_users;
+	var $find_text_users;
 	function user_settings() {
 		$this->limit_users = 10;
-		$this->limit_data = 30;
-		$this->page = 1;
+		//$this->limit_data = 30;
+		$this->page_users = 0;
+		$this->sort_users = 'id';				// сортировка по id
+		$this->desc_users = '';				// обратная сортировка выключена
+		$this->find_name_users = '';
+		$this->find_text_users = '';
 	}
 }
 
@@ -128,24 +137,41 @@ function check_symbol( $s ) {		// проверка на содержание т�
     if ($s == '') $out = true;
     return $out;
 }
+function check_symbol_en( $s ) {		// проверка на содержание только латинских букв
+    $s = preg_replace( "/[a-zA-Z]/", '', $s );
+    $out = false;
+    if ($s == '') $out = true;
+    return $out;
+}
 function check_role( $s ) {		// проверка на содержание только букв AWR
     $out = false;
     if  ( preg_match( "/[AWR]/", $s ) ) $out = true;
     return $out;
+}
+function check_numeric( $num ){		// проверка на целое положительное число 
+	$out = false;
+	if ( is_numeric($num) && ($num > 0) && ($num == (int)$num) ){
+		$out = true;
+	}
+	return $out;
 }
 function del_user( $id ){
 	$errors = array();
 	if ( check_numeric($id) ) {
 		$user = R::load( 'users' , $id);
 		if ( $user->id ) {
-			R::begin();
-			try{
-				R::trash($user);
-				R::commit();
-			}catch (Exception $e){
-				R::rollback();
-				$errors[] = 'При удалении произошла ошибка';
-				// echo $e->getMessage();
+			if ($user->id != $_SESSION['logged_user']->id){
+				R::begin();
+				try{
+					R::trash($user);
+					R::commit();
+				}catch (Exception $e){
+					R::rollback();
+					$errors[] = 'При удалении произошла ошибка';
+					// echo $e->getMessage();
+				}
+			} else{
+				$errors[] = 'Это ваш аккаунт';
 			}
 		} else {
 			$errors[] = 'Пользователь не найден';
@@ -160,16 +186,20 @@ function state_user( $id ){
 	if ( check_numeric($id) ) {
 		$user = R::load( 'users' , $id);
 		if ( $user->id ) {
-			R::begin();
-			try{
-				if ( $user->state == 'off') $user->state = 'on';
-				else $user->state = 'off';
-				R::store($user);
-				R::commit();
-			}catch (Exception $e){
-				R::rollback();
-				$errors[] = 'Ошибка при изменении свойства';
-				// echo $e->getMessage();
+			if ($user->id != $_SESSION['logged_user']->id){
+				R::begin();
+				try{
+					if ( $user->state == 'off') $user->state = 'on';
+					else $user->state = 'off';
+					R::store($user);
+					R::commit();
+				}catch (Exception $e){
+					R::rollback();
+					$errors[] = 'Ошибка при изменении свойства';
+					// echo $e->getMessage();
+				}
+			} else{
+				$errors[] = 'Это ваш аккаунт';
 			}
 		} else {
 			$errors[] = 'Пользователь не найден';
@@ -187,26 +217,48 @@ function limit_users( $limit ){
 }
 function page_users( $page ){
 	if ( check_numeric($page + 1) ) {
-		if ( $_SESSION['settings']->limit_users * $page < LIMIT_USERS) $_SESSION['settings']->page = $page;
+		if ( $_SESSION['settings']->limit_users * $page < LIMIT_USERS) $_SESSION['settings']->page_users = (int)$page;
+	}
+}
+function sort_users( $data ){
+	global $arr_sort_users;
+	$errors = array();
+	if ( in_array($data['sort'], $arr_sort_users) ){
+		$_SESSION['settings']->sort_users = $data['sort'];
+		if ( isset($data['desc']) && ($data['desc'] == 'on') ) $_SESSION['settings']->desc_users = 'on';
+		else $_SESSION['settings']->desc_users = '';
+	} else{
+		$errors[] = 'Недопустимый параметр сортировки';
+	}
+}
+function find_users( $data ){
+	global $arr_sort_users;
+	$errors = array();
+	if ( in_array($data['find'], $arr_sort_users) && check_symbol($data['text'] ) ){
+		$_SESSION['settings']->find_name_users = $data['find'];
+		$_SESSION['settings']->find_text_users = $data['text'];
+	} else{
+		$errors[] = 'Недопустимый параметр поиска';
 	}
 }
 function list_users(){
-	$page = $_SESSION['settings']->page;
+	$page = $_SESSION['settings']->page_users;
 	$limit = $_SESSION['settings']->limit_users;
+	if ( $_SESSION['settings']->desc_users == 'on' ) $direction = 'DESC';
+	else $direction = 'ASC';
 	$start = $page * $limit;
-	$out['users'] = R::findAll('users', "ORDER BY id ASC LIMIT {$start},{$limit}");
+	if ( $_SESSION['settings']->find_text_users == '' ){
+		$out['users'] = R::findAll('users', "ORDER BY {$_SESSION['settings']->sort_users} {$direction} LIMIT {$start},{$limit}");
+	} else{
+		$out['users'] = R::find('users', "{$_SESSION['settings']->find_name_users} LIKE ? ORDER BY {$_SESSION['settings']->sort_users} {$direction} LIMIT {$start},{$limit}", array(($_SESSION['settings']->find_text_users).'%'));
+		// $out['users'] = R::find('users', "login LIKE ?", array(($_SESSION['settings']->find_text_users).'%'));
+	}
 	$count = R::count('users');	
 	if ($page > 0) 	$out['prev'] = "href='?p=".($page-1)."'";
 	$out['curr'] = $page;
 	if ( $count / $limit > $page + 1 ) $out['next'] = "href='?p=".($page+1)."'";
 	return $out;
 }
-function check_numeric( $num ){		// проверка на целое положительное число 
-	$out = false;
-	if ( is_numeric($num) && ($num > 0) && ($num == (int)$num) ){
-		$out = true;
-	}
-	return $out;
-}
+
 
 ?>

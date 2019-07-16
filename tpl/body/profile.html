@@ -1,14 +1,9 @@
 <div>Имя пользователя: <?php echo $_SESSION['logged_user']->login ?></div>
 <div>Роль пользователя: <?php echo $arr_name_role[$_SESSION['logged_user']->role] ?></div>
-<!-- <hr> -->
-<!-- <a href="profile.php?p=users">Пользователи</a> -->
-
-
 
 <hr>
 Список пользователей:
 <?php echo "({$_SESSION['settings']->limit_users} на странице)"?>
-
 <br>
 
 <div class="users table">
@@ -19,15 +14,11 @@
 		<div class="td"></div>
 		<div class="td"></div>
 	</div>
-		<td></td>
-		<td></td>
-
-	</tr>
 	<?php
 		foreach ($info['users'] as $user){
 			echo "<div class='tr'>";
 	    	echo "<div class='user td {$user->state}'>{$user->login}</div>";
-	    	echo "<div class='role td {$user->state}'>{$arr_name_role[$user->role]}</div>";
+	    	echo "<div class='role td {$user->state}'>{$user->role} ({$arr_name_role[$user->role]})</div>";
 	    	echo "<div class='state td'>{$user->state}</div>";
 	    	echo "<div class='td'><a href='?st={$user->id}'>{$arr_name_state[$user->state]}</a></div>";
 	    	echo "<div class='td'><a href='?del={$user->id}'>удалить</a></div>";
@@ -35,7 +26,6 @@
 		}
 	?>
 </div>
-<!-- <hr> -->
 <div class="navi">
 	<?php
 		echo "<a {$info['prev']}>назад</a><span>{$info['curr']}</span><a {$info['next']}>вперед</a><br>";
@@ -43,5 +33,31 @@
 	   		echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
 		}
 	?>
+	<form class="sort" action="/profile.php" method="POST">
+		<p>Сортировка:</p>
+		<select name="sort">
+			<option value="id" <?php if($_SESSION['settings']->sort_users == 'id') echo 'selected'?>>Номер</option>
+			<option value="login" <?php if($_SESSION['settings']->sort_users == 'login') echo 'selected'?>>Имя пользователя</option>
+			<option value="role" <?php if($_SESSION['settings']->sort_users == 'role') echo 'selected'?>>Роль</option>
+			<option value="state" <?php if($_SESSION['settings']->sort_users == 'state') echo 'selected'?>>Состояние</option>
+		</select>
+		<p>обратная</p>
+		<input type="checkbox" <?php if($_SESSION['settings']->desc_users == 'on') echo 'checked'?> name="desc">
+		<p>
+			<button type="submit" name="do_sort">ОК</button>
+		</p>
+	</form>
+	<form class="find sort" action="/profile.php" method="POST">
+		<p>Поиск:</p>
+		<select name="find">
+			<option value="login" <?php if($_SESSION['settings']->find_name_users == 'login') echo 'selected'?>>Имя пользователя</option>
+			<option value="role" <?php if($_SESSION['settings']->find_name_users == 'role') echo 'selected'?>>Роль</option>
+		</select>
+		<input type="text" name="text" value="<?php echo $_SESSION['settings']->find_text_users ?>">
+		<p>
+			<button type="submit" name="do_find">ОК</button>
+		</p>
+	</form>	
+
 </div>
 
