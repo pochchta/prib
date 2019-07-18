@@ -7,9 +7,6 @@ if( ! R::testConnection() ) die('No DB connection!');
 include 'libs/phpqrcode/qrlib.php';		// https://github.com/t0k4rt/phpqrcode
 // inic_session();
 session_start();
-if ( empty($_SESSION['settings']->limit_users) ) {
-	$_SESSION['settings'] = new user_settings;
-}
 
 //----------------------------------------константы---------------------------------------
 define("LIMIT_LOGIN", 60, true);			// длина строки
@@ -29,24 +26,22 @@ $arr_name_state = array(
 );
 //QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 
-class user_settings{
-	var $limit_users;
-	//var $limit_data;
+class table_settings{
+	var $limit;
+	var $page;
+	var $sort;
+	var $desc;
+	var $find_name;
+	var $find_text;
 	var $message;
-	var $out;
-	var $page_users;
-	var $sort_users;
-	var $desc_users;
-	var $find_name_users;
-	var $find_text_users;
-	function user_settings() {
-		$this->limit_users = 10;
-		//$this->limit_data = 30;
-		$this->page_users = 0;
-		$this->sort_users = 'id';				// сортировка по id
-		$this->desc_users = '';				// обратная сортировка выключена
-		$this->find_name_users = '';
-		$this->find_text_users = '';
+	var $out;	
+	function table_settings() {
+		$this->limit = 10;
+		$this->page = 0;
+		$this->sort = 'id';				// сортировка по id
+		$this->desc = '';				// обратная сортировка выключена
+		$this->find_name = '';
+		$this->find_text = '';
 	}
 }
 
@@ -211,22 +206,27 @@ function state_user( $id ){
 }
 function limit_users( $limit ){
 	global $arr_limit_users;
-	if ( check_numeric($limit) ) {
-		if ( in_array($limit, $arr_limit_users)) $_SESSION['settings']->limit_users = $limit;
+	if ( check_numeric($limit) ) {	
+		if ( in_array($limit, $arr_limit_users)) {
+			$_SESSION['users']->page = (int)($_SESSION['users']->page * $_SESSION['users']->limit / $limit);
+			$_SESSION['users']->limit = $limit;
+		}	
 	}
 }
 function page_users( $page ){
 	if ( check_numeric($page + 1) ) {
-		if ( $_SESSION['settings']->limit_users * $page < LIMIT_USERS) $_SESSION['settings']->page_users = (int)$page;
+		if ( $_SESSION['users']->limit * $page < LIMIT_USERS) {
+			$_SESSION['users']->page = (int)$page;
+		}	
 	}
 }
 function sort_users( $data ){
 	global $arr_sort_users;
 	$errors = array();
 	if ( in_array($data['sort'], $arr_sort_users) ){
-		$_SESSION['settings']->sort_users = $data['sort'];
-		if ( isset($data['desc']) && ($data['desc'] == 'on') ) $_SESSION['settings']->desc_users = 'on';
-		else $_SESSION['settings']->desc_users = '';
+		$_SESSION['users']->sort = $data['sort'];
+		if ( isset($data['desc']) && ($data['desc'] == 'on') ) $_SESSION['users']->desc = 'on';
+		else $_SESSION['users']->desc = '';
 	} else{
 		$errors[] = 'Недопустимый параметр сортировки';
 	}
@@ -235,28 +235,32 @@ function find_users( $data ){
 	global $arr_sort_users;
 	$errors = array();
 	if ( in_array($data['find'], $arr_sort_users) && check_symbol($data['text'] ) ){
-		$_SESSION['settings']->find_name_users = $data['find'];
-		$_SESSION['settings']->find_text_users = $data['text'];
+		$_SESSION['users']->find_name = $data['find'];
+		$_SESSION['users']->find_text = $data['text'];
 	} else{
 		$errors[] = 'Недопустимый параметр поиска';
 	}
 }
 function list_users(){
-	$page = $_SESSION['settings']->page_users;
-	$limit = $_SESSION['settings']->limit_users;
-	if ( $_SESSION['settings']->desc_users == 'on' ) $direction = 'DESC';
+	$page = $_SESSION['users']->page;
+	$limit = $_SESSION['users']->limit;
+	if ( $_SESSION['users']->desc == 'on' ) $direction = 'DESC';
 	else $direction = 'ASC';
 	$start = $page * $limit;
-	if ( $_SESSION['settings']->find_text_users == '' ){
-		$out['users'] = R::findAll('users', "ORDER BY {$_SESSION['settings']->sort_users} {$direction} LIMIT {$start},{$limit}");
+	if ( $_SESSION['users']->find_text == '' ){
+		$out['users'] = R::findAll('users', "ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}");
 	} else{
-		$out['users'] = R::find('users', "{$_SESSION['settings']->find_name_users} LIKE ? ORDER BY {$_SESSION['settings']->sort_users} {$direction} LIMIT {$start},{$limit}", array(($_SESSION['settings']->find_text_users).'%'));
-		// $out['users'] = R::find('users', "login LIKE ?", array(($_SESSION['settings']->find_text_users).'%'));
+		$out['users'] = R::find('users', "{$_SESSION['users']->find_name} LIKE ? ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}", array(($_SESSION['users']->find_text).'%'));
+		// $out['users'] = R::find('users', "login LIKE ?", array(($_SESSION['users']->find_text).'%'));
 	}
 	$count = R::count('users');	
 	if ($page > 0) 	$out['prev'] = "href='?p=".($page-1)."'";
 	$out['curr'] = $page;
 	if ( $count / $limit > $page + 1 ) $out['next'] = "href='?p=".($page+1)."'";
+	$out['first'] = "href='?p="."0"."'";
+	$out['last'] = (int)($count / $limit) - 1;
+	if ($out['last'] < 0) $out['last'] = 0;
+	$out['last'] = "href='?p={$out['last']}'";
 	return $out;
 }
 

@@ -3,7 +3,7 @@
 
 <hr>
 Список пользователей:
-<?php echo "({$_SESSION['settings']->limit_users} на странице)"?>
+<?php echo "({$_SESSION['users']->limit} на странице)"?>
 <br>
 
 <div class="users table">
@@ -19,7 +19,7 @@
 			echo "<div class='tr'>";
 	    	echo "<div class='user td {$user->state}'>{$user->login}</div>";
 	    	echo "<div class='role td {$user->state}'>{$user->role} ({$arr_name_role[$user->role]})</div>";
-	    	echo "<div class='state td'>{$user->state}</div>";
+	    	echo "<div class='state td {$user->state}'>{$user->state}</div>";
 	    	echo "<div class='td'><a href='?st={$user->id}'>{$arr_name_state[$user->state]}</a></div>";
 	    	echo "<div class='td'><a href='?del={$user->id}'>удалить</a></div>";
 		    echo "</div>";
@@ -28,36 +28,78 @@
 </div>
 <div class="navi">
 	<?php
-		echo "<a {$info['prev']}>назад</a><span>{$info['curr']}</span><a {$info['next']}>вперед</a><br>";
+		echo "<div>";
+		echo "<a {$info['first']}'>первая</a>";
+		echo "<a {$info['prev']}>назад</a><span>{$info['curr']}</span><a {$info['next']}>вперед</a>";
+		echo "<a {$info['last']}'>последняя</a>";
+		echo "</div><div>";
 		foreach ($arr_limit_users as $limit){
 	   		echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
 		}
+		echo "</div>";
 	?>
 	<form class="sort" action="/profile.php" method="POST">
 		<p>Сортировка:</p>
 		<select name="sort">
-			<option value="id" <?php if($_SESSION['settings']->sort_users == 'id') echo 'selected'?>>Номер</option>
-			<option value="login" <?php if($_SESSION['settings']->sort_users == 'login') echo 'selected'?>>Имя пользователя</option>
-			<option value="role" <?php if($_SESSION['settings']->sort_users == 'role') echo 'selected'?>>Роль</option>
-			<option value="state" <?php if($_SESSION['settings']->sort_users == 'state') echo 'selected'?>>Состояние</option>
+			<option value="id" <?php if($_SESSION['users']->sort == 'id') echo 'selected'?>>Номер</option>
+			<option value="login" <?php if($_SESSION['users']->sort == 'login') echo 'selected'?>>Имя пользователя</option>
+			<option value="role" <?php if($_SESSION['users']->sort == 'role') echo 'selected'?>>Роль</option>
+			<option value="state" <?php if($_SESSION['users']->sort == 'state') echo 'selected'?>>Состояние</option>
 		</select>
 		<p>обратная</p>
-		<input type="checkbox" <?php if($_SESSION['settings']->desc_users == 'on') echo 'checked'?> name="desc">
+		<input type="checkbox" <?php if($_SESSION['users']->desc == 'on') echo 'checked'?> name="desc">
 		<p>
 			<button type="submit" name="do_sort">ОК</button>
 		</p>
 	</form>
-	<form class="find sort" action="/profile.php" method="POST">
-		<p>Поиск:</p>
-		<select name="find">
-			<option value="login" <?php if($_SESSION['settings']->find_name_users == 'login') echo 'selected'?>>Имя пользователя</option>
-			<option value="role" <?php if($_SESSION['settings']->find_name_users == 'role') echo 'selected'?>>Роль</option>
-		</select>
-		<input type="text" name="text" value="<?php echo $_SESSION['settings']->find_text_users ?>">
+<!-- 	<div class="sort">
 		<p>
-			<button type="submit" name="do_find">ОК</button>
+			<button type="submit" name="do_add" onclick="add_find_block()">+</button>
 		</p>
+	</div> -->
+	<form action="/profile.php" method="POST" id="find_form">
+		<div class="find sort" id="find_block">
+			<p>Поиск:</p>
+			<select name="find">
+				<option value="login" <?php if($_SESSION['users']->find_name == 'login') echo 'selected'?>>Имя пользователя</option>
+				<option value="role" <?php if($_SESSION['users']->find_name == 'role') echo 'selected'?>>Роль</option>
+			</select>
+			<input type="text" name="text" value="<?php echo $_SESSION['users']->find_text ?>">
+			<a href="#" class="link_add" onclick="add_find_block()">+</a>
+
+		</div>
+		<div class="find sort" id="find_button">
+			<p>
+				<button type="submit" name="do_find">Искать</button>
+			</p>			
+		</div>
 	</form>	
 
 </div>
+<script>
+	var n=1;
+	function add_find_block(){
+		var form = document.getElementById("find_form");
+		var button = document.getElementById("find_button");
+		var div = document.getElementById("find_block");
+		var new_div = div.cloneNode(true);
+		new_div.setAttribute('id', 'find_block'+n);
+		var select = new_div.getElementsByTagName('select');
+		var input = new_div.getElementsByTagName('input');
+		select[0].setAttribute('name', 'find'+n);
+		input[0].setAttribute('name', 'text'+n);
+		var link_add = new_div.getElementsByClassName("link_add");
+		var link_rem = link_add[0].cloneNode(true);
+		link_rem.innerHTML = '-';
+		link_rem.setAttribute( 'onclick', 'remove_find_block('+n+')' );
+		new_div.appendChild(link_rem);
+		form.insertBefore(new_div, button);
+		n++;
+	};
+	function remove_find_block(n_rem){
+		var div = document.getElementById("find_block"+n_rem);
+		var form = document.getElementById("find_form");
+		form.removeChild(div);
+	}							//$("select").prop("selectedIndex", 2);
+</script>
 

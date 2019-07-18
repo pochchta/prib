@@ -2,6 +2,6 @@
 	include 'model.php';
 
 	unset($_SESSION['logged_user']);
-	unset($_SESSION['settings']);
+	unset($_SESSION['users']);
 	header('Location: /');
 ?>

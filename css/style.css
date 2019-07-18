@@ -33,7 +33,8 @@
 .navi span{
 	margin: 0 10px 0 0;	
 }
-.users .off{
+.users .user.off,
+.users .role.off{
 	/*overflow: hidden;*/
 	text-decoration: line-through;
 }
@@ -41,8 +42,13 @@
 	overflow: hidden;
 	padding: 0;
 }
-.users .role{
-
+.users .state.on{
+	background-color: green;
+	padding-right: 2px;
+}
+.users .state.off{
+	background-color: red;
+	padding-right: 2px;
 }
 div.table{
 	display: table;
@@ -81,3 +87,12 @@ div.tr:last-child .td{
 .navi .sort input[type="text"]{
 	margin: 0 10px 0 0;
 	/*border: 1px solid #cccccc;*/
+}
+#find_form .link_add{
+	text-decoration: none;
+	color: black;
+	background-color: #ccc;
+	padding: 0 4px 0;
+	margin-top: 1px;
+	float: left;
+}
