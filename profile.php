@@ -1,4 +1,12 @@
 <?php 
+
+$test = array(
+	'find' => 'role',
+	'text' => 'r',
+	'find1' => 'role#"',
+	'text1' => 'r'
+);
+
 $title = 'Профиль';
 include 'model.php';
 if ( empty($_SESSION['users']->limit) ) {
@@ -12,10 +20,15 @@ if ( ! empty($_GET) ) {		// изменение страницы отображе
 	header('Location: /profile.php');
 } else {
 	if ( isset($_POST['do_sort']) ) sort_users($_POST);
-	if ( isset($_POST['do_find']) ) find_users($_POST);
+		$find_form = find_users($test);
+	// if ( isset($_POST['do_find']) ) find_users($_POST);
 
 	   // v($_SESSION['users']);
-	   // v($_POST);
+	    // v($_POST);
+	     v($_SESSION['users']);
+	     // v($_SESSION['users']->where);
+	     // v($_SESSION['users']->arr_where);
+	    
 
 	
 	// v( R::find('users', 'role=?', $test) );

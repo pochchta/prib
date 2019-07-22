@@ -31,8 +31,9 @@ class table_settings{
 	var $page;
 	var $sort;
 	var $desc;
-	var $find_name;
-	var $find_text;
+	// var $find_form;
+	var $where;		    // запрос "where name like ?"
+	var $arr_where;		// массив для этого запроса
 	var $message;
 	var $out;	
 	function table_settings() {
@@ -40,8 +41,9 @@ class table_settings{
 		$this->page = 0;
 		$this->sort = 'id';				// сортировка по id
 		$this->desc = '';				// обратная сортировка выключена
-		$this->find_name = '';
-		$this->find_text = '';
+		//$this->find_form = array();		// массив для сохранения данных из формы поиска
+		$this->where = '';
+		$this->arr_where = array();
 	}
 }
 
@@ -150,6 +152,11 @@ function check_numeric( $num ){		// проверка на целое полож�
 	}
 	return $out;
 }
+function check_like_query( $data){
+	$out = false;
+	if ( preg_match("/^%*[a-zA-ZА-Яа-яЁё0-9]+%*\z/u", $data) ) $out = true;
+	return $out;
+}
 function del_user( $id ){
 	$errors = array();
 	if ( check_numeric($id) ) {
@@ -233,13 +240,56 @@ function sort_users( $data ){
 }
 function find_users( $data ){
 	global $arr_sort_users;
-	$errors = array();
-	if ( in_array($data['find'], $arr_sort_users) && check_symbol($data['text'] ) ){
-		$_SESSION['users']->find_name = $data['find'];
-		$_SESSION['users']->find_text = $data['text'];
-	} else{
-		$errors[] = 'Недопустимый параметр поиска';
+	$out = array();
+	$one_find = array();
+	$find = '';
+	$error = '';
+	$where = '';
+	$arr_where = array();
+	foreach ($data as $key => $value){
+		if ( strpos($key, 'find') === 0 ) {
+			$find = $value;
+			if ( ! in_array($value, $arr_sort_users) ) $error = 'Недопустимый параметр поиска';
+		}
+		if ( strpos($key, 'text') === 0 ){
+			if ( empty($error) ){
+				if ( check_like_query($value) ){
+					if ($value != '') {
+						if ($where != '') $where = $where.' AND';		// может добавить кавычки `` в запрос ???
+						else $where = 'WHERE';
+						$where = $where.' '.$find.' LIKE ?';
+						$arr_where[] = $value;
+					}
+				} else{
+					$error = 'Недопустимый текст поиска';
+				}
+			}
+			$one_find['find'] = $find;
+			$one_find['text'] = $value;
+			$one_find['error'] = $error;
+			$find = '';
+			$error = '';
+			$out[] = $one_find;
+		}
 	}
+	$_SESSION['users']->where = $where;
+	$_SESSION['users']->arr_where = $arr_where;
+	 $_SESSION['users']->out = $out;
+
+
+// 	$_SESSION['test'] = $where;
+// 	$_SESSION['test1'] = $arr_where;
+// $_SESSION['test2'] = "{$_SESSION['test']} ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}";	
+
+
+
+	// if ( in_array($data['find'], $arr_sort_users) && check_symbol($data['text'] ) ){
+	// 	$_SESSION['users']->find_name = $data['find'];
+	// 	$_SESSION['users']->find_text = $data['text'];
+	// } else{
+	// 	$errors[] = 'Недопустимый параметр поиска';
+	// }
+	return $out;
 }
 function list_users(){
 	$page = $_SESSION['users']->page;
@@ -247,20 +297,22 @@ function list_users(){
 	if ( $_SESSION['users']->desc == 'on' ) $direction = 'DESC';
 	else $direction = 'ASC';
 	$start = $page * $limit;
-	if ( $_SESSION['users']->find_text == '' ){
-		$out['users'] = R::findAll('users', "ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}");
-	} else{
-		$out['users'] = R::find('users', "{$_SESSION['users']->find_name} LIKE ? ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}", array(($_SESSION['users']->find_text).'%'));
-		// $out['users'] = R::find('users', "login LIKE ?", array(($_SESSION['users']->find_text).'%'));
-	}
+	// if ( $_SESSION['users']->find_text == '' ){
+	// 	$out['users'] = R::findAll('users', "ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}");
+	// } else{
+	// 	$out['users'] = R::find('users', "{$_SESSION['users']->find_name} LIKE ? ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}", array(($_SESSION['users']->find_text).'%'));
+	// }
+
+	$out['users'] = R::find('users', "{$_SESSION['users']->where} ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION['users']->arr_where);
+
 	$count = R::count('users');	
 	if ($page > 0) 	$out['prev'] = "href='?p=".($page-1)."'";
 	$out['curr'] = $page;
 	if ( $count / $limit > $page + 1 ) $out['next'] = "href='?p=".($page+1)."'";
-	$out['first'] = "href='?p="."0"."'";
+	if ($page != $out['first'] ) $out['first'] = "href='?p="."0"."'";
 	$out['last'] = (int)($count / $limit) - 1;
 	if ($out['last'] < 0) $out['last'] = 0;
-	$out['last'] = "href='?p={$out['last']}'";
+	if ($page != $out['last'] ) $out['last'] = "href='?p={$out['last']}'";
 	return $out;
 }
 
