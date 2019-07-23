@@ -96,3 +96,6 @@ div.tr:last-child .td{
 	margin-top: 1px;
 	float: left;
 }
+#find_form input[type="text"].error{
+	color: red;
+}

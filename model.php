@@ -31,7 +31,7 @@ class table_settings{
 	var $page;
 	var $sort;
 	var $desc;
-	// var $find_form;
+	var $find_form;
 	var $where;		    // запрос "where name like ?"
 	var $arr_where;		// массив для этого запроса
 	var $message;
@@ -39,9 +39,9 @@ class table_settings{
 	function table_settings() {
 		$this->limit = 10;
 		$this->page = 0;
-		$this->sort = 'id';				// сортировка по id
-		$this->desc = '';				// обратная сортировка выключена
-		//$this->find_form = array();		// массив для сохранения данных из формы поиска
+		$this->sort = 'id';						// сортировка по id
+		$this->desc = '';						// обратная сортировка выключена
+		$this->find_form = array('id', '');		// массив для сохранения данных из формы поиска
 		$this->where = '';
 		$this->arr_where = array();
 	}
@@ -238,7 +238,7 @@ function sort_users( $data ){
 		$errors[] = 'Недопустимый параметр сортировки';
 	}
 }
-function find_users( $data ){
+function find_users( $data ){	
 	global $arr_sort_users;
 	$out = array();
 	$one_find = array();
@@ -248,7 +248,7 @@ function find_users( $data ){
 	$arr_where = array();
 	foreach ($data as $key => $value){
 		if ( strpos($key, 'find') === 0 ) {
-			$find = $value;
+			$find = $value;								// ошибка \/ никогда не попадает на выход (можно добавить ее в session[err])
 			if ( ! in_array($value, $arr_sort_users) ) $error = 'Недопустимый параметр поиска';
 		}
 		if ( strpos($key, 'text') === 0 ){
@@ -264,31 +264,18 @@ function find_users( $data ){
 					$error = 'Недопустимый текст поиска';
 				}
 			}
-			$one_find['find'] = $find;
-			$one_find['text'] = $value;
-			$one_find['error'] = $error;
+			if ( $value != '' ){					    // из-за этой проверки; иначе будут пустые элементы поиска
+				$one_find['find'] = htmlspecialchars($find);
+				$one_find['text'] = htmlspecialchars($value);
+				$one_find['error'] = $error;
+				$out[] = $one_find;
+			}
 			$find = '';
 			$error = '';
-			$out[] = $one_find;
 		}
 	}
 	$_SESSION['users']->where = $where;
 	$_SESSION['users']->arr_where = $arr_where;
-	 $_SESSION['users']->out = $out;
-
-
-// 	$_SESSION['test'] = $where;
-// 	$_SESSION['test1'] = $arr_where;
-// $_SESSION['test2'] = "{$_SESSION['test']} ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}";	
-
-
-
-	// if ( in_array($data['find'], $arr_sort_users) && check_symbol($data['text'] ) ){
-	// 	$_SESSION['users']->find_name = $data['find'];
-	// 	$_SESSION['users']->find_text = $data['text'];
-	// } else{
-	// 	$errors[] = 'Недопустимый параметр поиска';
-	// }
 	return $out;
 }
 function list_users(){
@@ -297,24 +284,15 @@ function list_users(){
 	if ( $_SESSION['users']->desc == 'on' ) $direction = 'DESC';
 	else $direction = 'ASC';
 	$start = $page * $limit;
-	// if ( $_SESSION['users']->find_text == '' ){
-	// 	$out['users'] = R::findAll('users', "ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}");
-	// } else{
-	// 	$out['users'] = R::find('users', "{$_SESSION['users']->find_name} LIKE ? ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}", array(($_SESSION['users']->find_text).'%'));
-	// }
-
 	$out['users'] = R::find('users', "{$_SESSION['users']->where} ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION['users']->arr_where);
-
-	$count = R::count('users');	
-	if ($page > 0) 	$out['prev'] = "href='?p=".($page-1)."'";
+	$count = R::count('users', "{$_SESSION['users']->where}", $_SESSION['users']->arr_where);
+	$out['count'] = $count;
+	if ($page > 0) $out['prev'] = "href='?p=".($page-1)."'";
 	$out['curr'] = $page;
 	if ( $count / $limit > $page + 1 ) $out['next'] = "href='?p=".($page+1)."'";
 	if ($page != $out['first'] ) $out['first'] = "href='?p="."0"."'";
-	$out['last'] = (int)($count / $limit) - 1;
-	if ($out['last'] < 0) $out['last'] = 0;
+	$out['last'] = (int)( ($count-1) / $limit ) ;
 	if ($page != $out['last'] ) $out['last'] = "href='?p={$out['last']}'";
 	return $out;
 }
-
-
 ?>

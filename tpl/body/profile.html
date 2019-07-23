@@ -2,7 +2,7 @@
 <div>Роль пользователя: <?php echo $arr_name_role[$_SESSION['logged_user']->role] ?></div>
 
 <hr>
-Список пользователей:
+Список пользователей (<?php echo $info['count'] ?> всего):
 <?php echo "({$_SESSION['users']->limit} на странице)"?>
 <br>
 
@@ -65,11 +65,9 @@
 					<option value="role" <?php if($find_block['find'] == 'role') echo 'selected'?>>Роль</option>
 					<option value="state" <?php if($find_block['find'] == 'state') echo 'selected'?>>Состояние</option>
 				</select>
-				<input type="text" name="text<?php if ($count_find_block) echo $count_find_block ?>" value="<?php echo $find_block['text'] ?>">
+				<input type="text" name="text<?php if ($count_find_block) echo $count_find_block ?>" value="<?php echo $find_block['text'] ?>" class="<?php if ( $find_block['error'] != '') echo 'error'?>">
 				<a href="#" class="link_add" onclick="add_find_block()">+</a>
-				<?php
-					if ($count_find_block) echo	"<a href='#' class='link_add' onclick='remove_find_block({$count_find_block})'>-</a>";
-				?>
+				<?php echo "<a href='#' class='link_add link_rem' onclick='remove_find_block({$count_find_block})'>-</a>"; ?>
 			</div>
 		<?php
 			$count_find_block++;
@@ -78,13 +76,14 @@
 		<div class="find sort" id="find_button">
 			<p>
 				<button type="submit" name="do_find">Искать</button>
+				<button type="submit" name="do_clear_find">Очистить</button>
 			</p>
 		</div>
 	</form>
 </div>
 
 <script>
-	var n=1;
+	var n=<?php echo $count_find_block ?>;
 	function add_find_block(){
 		var form = document.getElementById("find_form");
 		var button = document.getElementById("find_button");
@@ -94,20 +93,27 @@
 		var select = new_div.getElementsByTagName('select');
 		var input = new_div.getElementsByTagName('input');
 		select[0].setAttribute('name', 'find'+n);
+		select[0].selectedIndex = 0;
 		input[0].setAttribute('name', 'text'+n);
 		input[0].value = '';
-		var link_add = new_div.getElementsByClassName("link_add");
-		var link_rem = link_add[0].cloneNode(true);
-		link_rem.innerHTML = '-';
-		link_rem.setAttribute( 'onclick', 'remove_find_block('+n+')' );
-		new_div.appendChild(link_rem);
+		input[0].setAttribute('class', '');
+		var link_rem = new_div.getElementsByClassName("link_rem");
+		link_rem[0].setAttribute( 'onclick', 'remove_find_block('+n+')' );
 		form.insertBefore(new_div, button);
+		// setTimeout(function func() {
+		// 	window.scrollTo(button.offsetLeft, button.offsetTop);
+		// }, 100);
 		n++;
 	}
 	function remove_find_block(n_rem){
-		var div = document.getElementById("find_block"+n_rem);
-		var form = document.getElementById("find_form");
-		form.removeChild(div);
+		if (n_rem == 0){
+			var div = document.getElementById("find_block");
+			var input = div.getElementsByTagName('input');
+			input[0].value = '';			
+		} else {
+			var div = document.getElementById("find_block"+n_rem);
+			var form = document.getElementById("find_form");
+			form.removeChild(div);			
+		}
 	}
 </script>
-
