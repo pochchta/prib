@@ -21,7 +21,7 @@
 	    	echo "<div class='role td {$user->state}'>{$user->role} ({$arr_name_role[$user->role]})</div>";
 	    	echo "<div class='state td {$user->state}'>{$user->state}</div>";
 	    	echo "<div class='td'><a href='?st={$user->id}'>{$arr_name_state[$user->state]}</a></div>";
-	    	echo "<div class='td'><a href='?del={$user->id}'>удалить</a></div>";
+	    	echo "<div class='td'><a href='#' onClick='show_popup_remove({$user->id})'>удалить</a></div>";
 		    echo "</div>";
 		}
 	?>
@@ -82,6 +82,14 @@
 	</form>
 </div>
 
+<div class="popup" id='popup_remove'>
+	<p>Удалить пользователя?</p>
+	<div class="buttons">
+		<a href="#" id="yes_popup_remove">да</a>
+		<a href="#" onClick="hide_popup_remove()">нет</a>
+	</div>		
+</div>
+
 <script>
 	var n=<?php echo $count_find_block ?>;
 	function add_find_block(){
@@ -113,7 +121,16 @@
 		} else {
 			var div = document.getElementById("find_block"+n_rem);
 			var form = document.getElementById("find_form");
-			form.removeChild(div);			
+			form.removeChild(div);
 		}
+	}
+	function show_popup_remove( id ) {
+		var popup = document.getElementById("popup_remove");
+		var yes = document.getElementById("yes_popup_remove");
+		yes.setAttribute('href', '?del='+id);
+		popup.setAttribute('style', 'display:block');
+	}
+	function hide_popup_remove(){
+		document.getElementById('popup_remove').setAttribute('style', 'display:none');
 	}
 </script>

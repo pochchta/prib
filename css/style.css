@@ -1,6 +1,10 @@
 *, html, body{
 
 }
+#errors{
+	background-color: #D9B2B2;
+	padding: 20px;
+}
 .ok{
 	color: green;
 }
@@ -99,3 +103,25 @@ div.tr:last-child .td{
 #find_form input[type="text"].error{
 	color: red;
 }
+
+.popup{
+	border: 1px solid #bbb;
+	position: fixed;
+	top: 400px;
+	left: 500px;
+	width: 250px;
+	padding: 20px 30px 30px;
+	background-color: #ddd;
+	display: none;
+}
+.popup .buttons{
+	text-align: center;
+}
+.popup p{
+	text-align: center;
+}
+.popup a{
+	text-align: center;
+	padding: 0 30px;
+}
+

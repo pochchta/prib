@@ -7,6 +7,7 @@ if( ! R::testConnection() ) die('No DB connection!');
 include 'libs/phpqrcode/qrlib.php';		// https://github.com/t0k4rt/phpqrcode
 // inic_session();
 session_start();
+$_SESSION['errors'] = array();
 
 //----------------------------------------константы---------------------------------------
 define("LIMIT_LOGIN", 60, true);			// длина строки
@@ -152,9 +153,17 @@ function check_numeric( $num ){		// проверка на целое полож�
 	}
 	return $out;
 }
-function check_like_query( $data){
+function check_like_query( $data){		// если разрешить пробелы, то нужно проверять что есть что-то кроме пробелов
 	$out = false;
 	if ( preg_match("/^%*[a-zA-ZА-Яа-яЁё0-9]+%*\z/u", $data) ) $out = true;
+	return $out;
+}
+function name_user( $id ){	// получить имя по id
+	$out = '';
+	if ( check_numeric($id) ){
+		$user = R::load( 'users' , $id);
+		if ($user->name) $out = $user->name;
+	}
 	return $out;
 }
 function del_user( $id ){
@@ -243,37 +252,41 @@ function find_users( $data ){
 	$out = array();
 	$one_find = array();
 	$find = '';
+	$errors = array();		
 	$error = '';
 	$where = '';
 	$arr_where = array();
 	foreach ($data as $key => $value){
 		if ( strpos($key, 'find') === 0 ) {
-			$find = $value;								// ошибка \/ никогда не попадает на выход (можно добавить ее в session[err])
-			if ( ! in_array($value, $arr_sort_users) ) $error = 'Недопустимый параметр поиска';
+			$find = $value;
+			if ( ! in_array($value, $arr_sort_users) ) {
+				$error = 'Недопустимый параметр поиска';
+				$errors[] = $error;
+			}	
 		}
 		if ( strpos($key, 'text') === 0 ){
-			if ( empty($error) ){
+			if ( ($error == '') && ($value != '') ){
 				if ( check_like_query($value) ){
-					if ($value != '') {
-						if ($where != '') $where = $where.' AND';		// может добавить кавычки `` в запрос ???
-						else $where = 'WHERE';
-						$where = $where.' '.$find.' LIKE ?';
-						$arr_where[] = $value;
-					}
+					if ($where != '') $where = $where.' AND';		// нужно добавить кавычки `` в запрос ???
+					else $where = 'WHERE';
+					$where = $where.' '.$find.' LIKE ?';
+					$arr_where[] = $value;
 				} else{
 					$error = 'Недопустимый текст поиска';
+					$errors[] = $error;
 				}
 			}
-			if ( $value != '' ){					    // из-за этой проверки; иначе будут пустые элементы поиска
+			if ($value != ''){
 				$one_find['find'] = htmlspecialchars($find);
 				$one_find['text'] = htmlspecialchars($value);
 				$one_find['error'] = $error;
 				$out[] = $one_find;
 			}
+			$error = '';			
 			$find = '';
-			$error = '';
 		}
 	}
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 	$_SESSION['users']->where = $where;
 	$_SESSION['users']->arr_where = $arr_where;
 	return $out;
