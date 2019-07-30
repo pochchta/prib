@@ -5,15 +5,14 @@ R::setup( 'mysql:host=localhost;dbname=devices', 'root', '' ); //for both mysql 
 if( ! R::testConnection() ) die('No DB connection!');
 //include 'libs/phpqrcode.php';
 include 'libs/phpqrcode/qrlib.php';		// https://github.com/t0k4rt/phpqrcode
-// inic_session();
 session_start();
-$_SESSION['errors'] = array();
+if ( ! isset($_SESSION['errors']) ) $_SESSION['errors'] = array();
 
 //----------------------------------------константы---------------------------------------
 define("LIMIT_LOGIN", 60, true);			// длина строки
 define("LIMIT_PASSWORD", 60, true);
 define("LIMIT_ROLE", 1, true);
-define("LIMIT_USERS", 999999999999, true);	// количество юзеров в системе
+define("LIMIT_FIELDS", 1999999999, true);	// лимит записей в таблице
 $arr_limit_users = array(3,5,10,20);   // массивы констант с php 5.6
 $arr_sort_users = array('id', 'login', 'role', 'state');
 $arr_name_role = array(
@@ -36,13 +35,13 @@ class table_settings{
 	var $where;		    // запрос "where name like ?"
 	var $arr_where;		// массив для этого запроса
 	var $message;
-	var $out;	
+	var $out;
 	function table_settings() {
 		$this->limit = 10;
 		$this->page = 0;
 		$this->sort = 'id';						// сортировка по id
 		$this->desc = '';						// обратная сортировка выключена
-		$this->find_form = array('id', '');		// массив для сохранения данных из формы поиска
+		$this->find_form[0] = array('id', '');		// массив для сохранения данных из формы поиска
 		$this->where = '';
 		$this->arr_where = array();
 	}
@@ -153,23 +152,27 @@ function check_numeric( $num ){		// проверка на целое полож�
 	}
 	return $out;
 }
-function check_like_query( $data){		// если разрешить пробелы, то нужно проверять что есть что-то кроме пробелов
+function check_like_query( $data , $table_name ){	// если разрешить пробелы, то нужно проверять что есть что-то кроме пробелов
 	$out = false;
-	if ( preg_match("/^%*[a-zA-ZА-Яа-яЁё0-9]+%*\z/u", $data) ) $out = true;
-	return $out;
-}
-function name_user( $id ){	// получить имя по id
-	$out = '';
-	if ( check_numeric($id) ){
-		$user = R::load( 'users' , $id);
-		if ($user->name) $out = $user->name;
+	switch ( $table_name ) {
+		case 'users':
+			if ( preg_match("/^%*[a-zA-ZА-Яа-яЁё0-9]+%*\z/u", $data) ) $out = true;
+			break;
 	}
 	return $out;
 }
-function del_user( $id ){
+// function name_user( $id ){	// получить имя по id
+// 	$out = '';
+// 	if ( check_numeric($id) ){
+// 		$user = R::load( 'users' , $id);
+// 		if ($user->name) $out = $user->name;
+// 	}
+// 	return $out;
+// }
+function del_user( $id , $table_name ){
 	$errors = array();
 	if ( check_numeric($id) ) {
-		$user = R::load( 'users' , $id);
+		$user = R::load( $table_name , $id);
 		if ( $user->id ) {
 			if ($user->id != $_SESSION['logged_user']->id){
 				R::begin();
@@ -190,12 +193,12 @@ function del_user( $id ){
 	} else {
 		$errors[] = 'Недопустимый параметр';
 	}
-	return $errors;
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
-function state_user( $id ){
+function state_user( $id , $table_name ){
 	$errors = array();
 	if ( check_numeric($id) ) {
-		$user = R::load( 'users' , $id);
+		$user = R::load( $table_name , $id);
 		if ( $user->id ) {
 			if ($user->id != $_SESSION['logged_user']->id){
 				R::begin();
@@ -218,37 +221,71 @@ function state_user( $id ){
 	} else {
 		$errors[] = 'Недопустимый параметр';
 	}
-	return $errors;
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
-function limit_users( $limit ){
-	global $arr_limit_users;
-	if ( check_numeric($limit) ) {	
-		if ( in_array($limit, $arr_limit_users)) {
-			$_SESSION['users']->page = (int)($_SESSION['users']->page * $_SESSION['users']->limit / $limit);
-			$_SESSION['users']->limit = $limit;
-		}	
+function limit_fields( $limit , $table_name ){
+	$errors = array();	
+	$arr_valid_limit = array();
+	switch ( $table_name ) {
+		case 'users':
+			global $arr_limit_users;
+			$arr_valid_limit = $arr_limit_users;
+			break;
+	}	
+	if ( check_numeric($limit) ) {
+		if ( in_array($limit, $arr_valid_limit) ) {
+			$_SESSION[$table_name]->page = (int)($_SESSION[$table_name]->page * $_SESSION[$table_name]->limit / $limit);
+			$_SESSION[$table_name]->limit = $limit;
+		} else{
+			$errors[] = 'Недопустимый параметр лимита';
+		}
+	} else{
+		$errors[] = 'Недопустимый параметр лимита';
 	}
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
-function page_users( $page ){
-	if ( check_numeric($page + 1) ) {
-		if ( $_SESSION['users']->limit * $page < LIMIT_USERS) {
-			$_SESSION['users']->page = (int)$page;
-		}	
-	}
-}
-function sort_users( $data ){
-	global $arr_sort_users;
+function page_fields( $page , $table_name  ){
 	$errors = array();
-	if ( in_array($data['sort'], $arr_sort_users) ){
-		$_SESSION['users']->sort = $data['sort'];
-		if ( isset($data['desc']) && ($data['desc'] == 'on') ) $_SESSION['users']->desc = 'on';
-		else $_SESSION['users']->desc = '';
+	if ( check_numeric($page + 1) ) {
+		if ( $_SESSION[$table_name]->limit * $page < LIMIT_FIELDS ) {
+			$_SESSION[$table_name]->page = (int)$page;
+		} else{
+			$errors[] = 'Страница не найдена';
+		}
+	} else{
+		$errors[] = 'Недопустимый параметр номера страницы';
+	}
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
+}
+function sort_fields( $data , $table_name ){
+	$errors = array();
+	$arr_valid_sort = array();	// массив допустимых категорий сортировки
+	switch ( $table_name ) {
+		case 'users':
+			global $arr_sort_users;
+			$arr_valid_sort = $arr_sort_users;		
+			break;
+	}
+	if ( in_array($data['sort'], $arr_valid_sort) ){
+		$_SESSION[$table_name]->sort = $data['sort'];
+		if ( $data['desc'] == 'on' ) $_SESSION[$table_name]->desc = 'on';
+		else $_SESSION[$table_name]->desc = '';
 	} else{
 		$errors[] = 'Недопустимый параметр сортировки';
 	}
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
-function find_users( $data ){	
-	global $arr_sort_users;
+function find_fields( $data , $table_name ){		// поиск в таблице (POST, имя)
+	$arr_valid_find = array();	// массив допустимых категорий поиска
+	switch ( $table_name ) {
+		case 'users':
+			global $arr_sort_users;
+			$arr_valid_find = $arr_sort_users;
+			break;
+		default:
+			# code...
+			break;
+	}
 	$out = array();
 	$one_find = array();
 	$find = '';
@@ -257,16 +294,17 @@ function find_users( $data ){
 	$where = '';
 	$arr_where = array();
 	foreach ($data as $key => $value){
+		$value = trim($value);
 		if ( strpos($key, 'find') === 0 ) {
 			$find = $value;
-			if ( ! in_array($value, $arr_sort_users) ) {
+			if ( ! in_array($value, $arr_valid_find) ) {
 				$error = 'Недопустимый параметр поиска';
 				$errors[] = $error;
 			}	
 		}
 		if ( strpos($key, 'text') === 0 ){
 			if ( ($error == '') && ($value != '') ){
-				if ( check_like_query($value) ){
+				if ( check_like_query($value, $table_name) ){
 					if ($where != '') $where = $where.' AND';		// нужно добавить кавычки `` в запрос ???
 					else $where = 'WHERE';
 					$where = $where.' '.$find.' LIKE ?';
@@ -282,23 +320,24 @@ function find_users( $data ){
 				$one_find['error'] = $error;
 				$out[] = $one_find;
 			}
-			$error = '';			
+			$error = '';	
 			$find = '';
 		}
 	}
+	$_SESSION[$table_name]->find_form = $out;
+	$_SESSION[$table_name]->where = $where;
+	$_SESSION[$table_name]->arr_where = $arr_where;	
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
-	$_SESSION['users']->where = $where;
-	$_SESSION['users']->arr_where = $arr_where;
-	return $out;
+	// return $out;
 }
-function list_users(){
-	$page = $_SESSION['users']->page;
-	$limit = $_SESSION['users']->limit;
-	if ( $_SESSION['users']->desc == 'on' ) $direction = 'DESC';
+function list_fields( $table_name ){
+	$page = $_SESSION[$table_name]->page;
+	$limit = $_SESSION[$table_name]->limit;
+	if ( $_SESSION[$table_name]->desc == 'on' ) $direction = 'DESC';
 	else $direction = 'ASC';
 	$start = $page * $limit;
-	$out['users'] = R::find('users', "{$_SESSION['users']->where} ORDER BY {$_SESSION['users']->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION['users']->arr_where);
-	$count = R::count('users', "{$_SESSION['users']->where}", $_SESSION['users']->arr_where);
+	$out[$table_name] = R::find($table_name, "{$_SESSION[$table_name]->where} ORDER BY {$_SESSION[$table_name]->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION[$table_name]->arr_where);
+	$count = R::count($table_name, "{$_SESSION[$table_name]->where}", $_SESSION[$table_name]->arr_where);
 	$out['count'] = $count;
 	if ($page > 0) $out['prev'] = "href='?p=".($page-1)."'";
 	$out['curr'] = $page;

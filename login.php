@@ -8,7 +8,7 @@ if ( isset($_POST['do_login']) ){
 		if ( isset($_SESSION['logged_user']) ){
 			$message =  'Вы вошли как '.$_SESSION['logged_user']->login;
 			$message_class = 'ok';
-		} 
+		}
 	}else {
 		$message = array_shift($errors);
 		$message_class = 'error';
