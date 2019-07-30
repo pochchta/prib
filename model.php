@@ -7,6 +7,7 @@ if( ! R::testConnection() ) die('No DB connection!');
 include 'libs/phpqrcode/qrlib.php';		// https://github.com/t0k4rt/phpqrcode
 session_start();
 if ( ! isset($_SESSION['errors']) ) $_SESSION['errors'] = array();
+if ( ! isset($_SESSION['messages']) ) $_SESSION['messages'] = array();
 
 //----------------------------------------константы---------------------------------------
 define("LIMIT_LOGIN", 60, true);			// длина строки
@@ -156,7 +157,7 @@ function check_like_query( $data , $table_name ){	// если разрешить
 	$out = false;
 	switch ( $table_name ) {
 		case 'users':
-			if ( preg_match("/^%*[a-zA-ZА-Яа-яЁё0-9]+%*\z/u", $data) ) $out = true;
+			if ( preg_match("/^%?[a-zA-ZА-Яа-яЁё0-9]+%?\z/u", $data) ) $out = true;
 			break;
 	}
 	return $out;
@@ -169,7 +170,7 @@ function check_like_query( $data , $table_name ){	// если разрешить
 // 	}
 // 	return $out;
 // }
-function del_user( $id , $table_name ){
+function del_fields( $id , $table_name ){
 	$errors = array();
 	if ( check_numeric($id) ) {
 		$user = R::load( $table_name , $id);
@@ -193,9 +194,10 @@ function del_user( $id , $table_name ){
 	} else {
 		$errors[] = 'Недопустимый параметр';
 	}
+	if ( empty($errors) ) $_SESSION['messages'][] = 'Удалено успешно';
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
-function state_user( $id , $table_name ){
+function state_fields( $id , $table_name ){
 	$errors = array();
 	if ( check_numeric($id) ) {
 		$user = R::load( $table_name , $id);
@@ -221,6 +223,7 @@ function state_user( $id , $table_name ){
 	} else {
 		$errors[] = 'Недопустимый параметр';
 	}
+	if ( empty($errors) ) $_SESSION['messages'][] = 'Состояние изменено';
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
 function limit_fields( $limit , $table_name ){
@@ -234,7 +237,7 @@ function limit_fields( $limit , $table_name ){
 	}	
 	if ( check_numeric($limit) ) {
 		if ( in_array($limit, $arr_valid_limit) ) {
-			$_SESSION[$table_name]->page = (int)($_SESSION[$table_name]->page * $_SESSION[$table_name]->limit / $limit);
+			// $_SESSION[$table_name]->page = (int)($_SESSION[$table_name]->page * $_SESSION[$table_name]->limit / $limit);
 			$_SESSION[$table_name]->limit = $limit;
 		} else{
 			$errors[] = 'Недопустимый параметр лимита';
@@ -326,18 +329,24 @@ function find_fields( $data , $table_name ){		// поиск в таблице (P
 	}
 	$_SESSION[$table_name]->find_form = $out;
 	$_SESSION[$table_name]->where = $where;
-	$_SESSION[$table_name]->arr_where = $arr_where;	
+	$_SESSION[$table_name]->arr_where = $arr_where;
+	// $_SESSION[$table_name]->page = 0;
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 	// return $out;
 }
 function list_fields( $table_name ){
+	$count = R::count($table_name, "{$_SESSION[$table_name]->where}", $_SESSION[$table_name]->arr_where);
 	$page = $_SESSION[$table_name]->page;
 	$limit = $_SESSION[$table_name]->limit;
+	if ( (int)( ($count-1) / $limit ) < $page ) {
+		$page = (int)( ($count-1) / $limit );
+		$_SESSION[$table_name]->page = $page;
+	}
 	if ( $_SESSION[$table_name]->desc == 'on' ) $direction = 'DESC';
 	else $direction = 'ASC';
 	$start = $page * $limit;
 	$out[$table_name] = R::find($table_name, "{$_SESSION[$table_name]->where} ORDER BY {$_SESSION[$table_name]->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION[$table_name]->arr_where);
-	$count = R::count($table_name, "{$_SESSION[$table_name]->where}", $_SESSION[$table_name]->arr_where);
+	
 	$out['count'] = $count;
 	if ($page > 0) $out['prev'] = "href='?p=".($page-1)."'";
 	$out['curr'] = $page;

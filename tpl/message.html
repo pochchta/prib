@@ -1,0 +1,15 @@
+<?php 
+	if ( ! empty($_SESSION['messages']) ) :
+		echo '<div class="messages" id="messages">';
+		echo 'Сообщение: '.array_shift($_SESSION['messages']);
+		echo '</div>';
+		$_SESSION['messages'] = array();
+?>
+<script>
+	messages.onclick = function() {
+		document.getElementById('messages').setAttribute('style', 'display:none');
+	};
+</script>
+<?php 
+	endif 
+?>

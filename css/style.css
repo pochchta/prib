@@ -5,6 +5,10 @@
 	background-color: #D9B2B2;
 	padding: 20px;
 }
+#messages{
+	background-color: #93C799;
+	padding: 20px;
+}
 .ok{
 	color: green;
 }

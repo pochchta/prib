@@ -1,10 +1,10 @@
 <div>Имя пользователя: <?php echo $_SESSION['logged_user']->login ?></div>
 <div>Роль пользователя: <?php echo $arr_name_role[$_SESSION['logged_user']->role] ?></div>
-
-<hr>
-Список пользователей (<?php echo $info['count'] ?> всего):
-<?php echo "({$_SESSION['users']->limit} на странице)"?>
-<br>
+<p></p>
+<div>
+	Список пользователей (<?php echo $info['count'] ?> всего):
+	<?php echo "({$_SESSION['users']->limit} на странице)"?>
+</div>
 
 <div class="users table">
 	<div class="tr">
@@ -34,7 +34,8 @@
 		echo "<a {$info['last']}'>последняя</a>";
 		echo "</div><div>";
 		foreach ($arr_limit_users as $limit){
-	   		echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
+			if ( $limit != $_SESSION['users']->limit ) echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
+	   		else echo "<a class='limit'>{$limit}</a>";
 		}
 		echo "</div>";
 	?>
