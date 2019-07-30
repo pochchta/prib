@@ -21,7 +21,7 @@
 	    	echo "<div class='role td {$user->state}'>{$user->role} ({$arr_name_role[$user->role]})</div>";
 	    	echo "<div class='state td {$user->state}'>{$user->state}</div>";
 	    	echo "<div class='td'><a href='?st={$user->id}'>{$arr_name_state[$user->state]}</a></div>";
-	    	echo "<div class='td'><a href='#' onClick='show_popup_remove({$user->id})'>удалить</a></div>";
+	    	echo "<div class='td'><a href='#' onClick='show_popup_remove({$user->id}, \"{$user->login}\")'>удалить</a></div>";
 		    echo "</div>";
 		}
 	?>
@@ -83,7 +83,8 @@
 </div>
 
 <div class="popup" id='popup_remove'>
-	<p>Удалить пользователя?</p>
+	<p>Удалить пользователя</p>
+	<p id="login_popup_remove"></p>
 	<div class="buttons">
 		<a href="#" id="yes_popup_remove">да</a>
 		<a href="#" onClick="hide_popup_remove()">нет</a>
@@ -106,7 +107,7 @@
 		input[0].value = '';
 		input[0].setAttribute('class', '');
 		var link_rem = new_div.getElementsByClassName("link_rem");
-		link_rem[0].setAttribute( 'onclick', 'remove_find_block('+n+')' );
+		link_rem[0].setAttribute( 'onclick', 'remove_find_block(' + n + ')' );
 		form.insertBefore(new_div, button);
 		// setTimeout(function func() {
 		// 	window.scrollTo(button.offsetLeft, button.offsetTop);
@@ -124,11 +125,14 @@
 			form.removeChild(div);
 		}
 	}
-	function show_popup_remove( id ) {
+	function show_popup_remove( id , login) {
 		var popup = document.getElementById("popup_remove");
 		var yes = document.getElementById("yes_popup_remove");
 		yes.setAttribute('href', '?del='+id);
+		var p_login = document.getElementById("login_popup_remove");
+		p_login.innerHTML = login + "?";
 		popup.setAttribute('style', 'display:block');
+
 	}
 	function hide_popup_remove(){
 		document.getElementById('popup_remove').setAttribute('style', 'display:none');
