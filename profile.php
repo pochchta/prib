@@ -5,12 +5,12 @@ if ( empty($_SESSION['users']->limit) ) {
 	$_SESSION['users'] = new table_settings;
 }
 if ( ! empty($_GET) ) {		// изменение страницы отображения списка пользователей
-	if ( isset($_GET['del']) )  del_fields( $_GET['del'] , 'users' ); 			// удаление
-	if ( isset($_GET['st']) ) state_fields( $_GET['st'] , 'users' ); 			// состояние
-	if ( isset($_GET['lu']) ) limit_fields( $_GET['lu'] , 'users' ); 			// лимит на страницу
-	if ( isset($_GET['p']) )   page_fields( $_GET['p'] , 'users' ); 			// номер страницы
+	if ( isset($_GET['del']) )  del_fields( $_GET['del'] , 'users' ); 			            // удаление
+	if ( isset($_GET['st']) ) state_fields( $_GET['st'] , 'users' ); 			            // состояние
+	if ( isset($_GET['lu']) ) limit_fields( $_GET['lu'] , 'users' ); 			            // лимит на страницу
 	header('Location: /profile.php');	// для очистки адресной строки
 } else {
+	if ( isset($_POST['n_page']) )   	  page_fields( $_POST['n_page'] , 'users' ); 		// номер страницы
 	if ( isset($_POST['do_sort']) ) 	  sort_fields( $_POST , 'users' );
 	if ( isset($_POST['do_find']) ) 	  find_fields( $_POST , 'users' );
 	if ( isset($_POST['do_clear_find']) ) find_fields( array() , 'users' );

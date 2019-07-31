@@ -348,12 +348,15 @@ function list_fields( $table_name ){
 	$out[$table_name] = R::find($table_name, "{$_SESSION[$table_name]->where} ORDER BY {$_SESSION[$table_name]->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION[$table_name]->arr_where);
 	
 	$out['count'] = $count;
-	if ($page > 0) $out['prev'] = "href='?p=".($page-1)."'";
 	$out['curr'] = $page;
-	if ( $count / $limit > $page + 1 ) $out['next'] = "href='?p=".($page+1)."'";
-	if ($page != $out['first'] ) $out['first'] = "href='?p="."0"."'";
+	$out['first'] = 0;
+	if ( $page == $out['first'] ) $out['first'] = false;
 	$out['last'] = (int)( ($count-1) / $limit ) ;
-	if ($page != $out['last'] ) $out['last'] = "href='?p={$out['last']}'";
+	if ( $page == $out['last'] ) $out['last'] = false;
+	if ( $page > 0) $out['prev'] = $page-1;
+	else $out['prev'] = false;
+	if ( $page < $out['last'] ) $out['next'] = $page+1;
+	else $out['next'] = false;	
 	return $out;
 }
 ?>

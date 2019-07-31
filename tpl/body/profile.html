@@ -26,19 +26,23 @@
 		}
 	?>
 </div>
+<p></p>
 <div class="navi">
-	<?php
-		echo "<div>";
-		echo "<a {$info['first']}'>первая</a>";
-		echo "<a {$info['prev']}>назад</a><span>{$info['curr']}</span><a {$info['next']}>вперед</a>";
-		echo "<a {$info['last']}'>последняя</a>";
-		echo "</div><div>";
-		foreach ($arr_limit_users as $limit){
-			if ( $limit != $_SESSION['users']->limit ) echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
-	   		else echo "<a class='limit'>{$limit}</a>";
-		}
-		echo "</div>";
-	?>
+	<form action="/profile.php" method="POST" id="n_page">
+		<a <?php if ( $info['first'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['first'] ?>)">первая(<?php echo $info['first'] ?>)</a>
+		<a <?php if ( $info['prev'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['prev'] ?>)">назад(<?php echo $info['prev'] ?>)</a>
+		<input type='text' id='n_page_input' value="<?php echo $info['curr'] ?>" name='n_page'>
+		<a <?php if ( $info['next'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['next'] ?>)">вперед(<?php echo $info['next'] ?>)</a>
+		<a <?php if ( $info['last'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['last'] ?>)">последняя(<?php echo $info['last'] ?>)</a>
+	</form>
+	<div>
+		<?php		
+			foreach ($arr_limit_users as $limit){
+				if ( $limit != $_SESSION['users']->limit ) echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
+		   		else echo "<a class='limit'>{$limit}</a>";
+			}
+		?>
+	</div>
 	<form class="sort" action="/profile.php" method="POST">
 		<p>Сортировка:</p>
 		<select name="sort">
@@ -54,7 +58,6 @@
 		</p>
 	</form>
 	<form action="/profile.php" method="POST" id="find_form">
-
 		<?php
 			$count_find_block = 0;
 			foreach ($find_form as $find_block) : 
@@ -137,5 +140,12 @@
 	}
 	function hide_popup_remove(){
 		document.getElementById('popup_remove').setAttribute('style', 'display:none');
+	}
+	function set_page( n_page ) {
+		if (n_page != null){
+			var hidden = document.getElementById("n_page_input");
+			hidden.value = n_page;
+			document.forms['n_page'].submit();
+		}
 	}
 </script>

@@ -78,6 +78,16 @@ div.tr:last-child .td{
 	border-bottom: 1px solid gray;
 }
 
+.navi #n_page input#n_page_input{
+	width: 75px;
+}
+.navi #n_page a{
+	width: 75px;
+	text-decoration: none;
+}
+.navi #n_page a:hover{
+	background-color: #eee;
+}
 .navi .sort select,
 .navi .sort p{
 	float: left;
