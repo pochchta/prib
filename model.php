@@ -16,12 +16,18 @@ define("LIMIT_ROLE", 1, true);
 define("LIMIT_FIELDS", 1999999999, true);	// лимит записей в таблице
 $arr_limit_users = array(3,5,10,20);   // массивы констант с php 5.6
 $arr_sort_users = array('id', 'login', 'role', 'state');
+$arr_role = array('A' , 'W' , 'R');
 $arr_name_role = array(
 	'A' => 'Администратор',
 	'R' => 'Чтение',
 	'W' => 'Редактирование'
 );
+$arr_state = array('on' , 'off');
 $arr_name_state = array(
+	'off' => 'заблокирован',
+	'on' => 'активен'
+);
+$arr_button_state = array(		// инвертированные названия для кнопок
 	'off' => 'включить',
 	'on' => 'выключить'
 );
@@ -46,6 +52,9 @@ class table_settings{
 		$this->where = '';
 		$this->arr_where = array();
 	}
+}
+class item_settings{
+	var $id;
 }
 
 function v( $data ){	// var dump с построчным выводом
@@ -130,20 +139,18 @@ function registering_user($data){		// регистрация (POST на вход
 	return $out;
 }
 function check_symbol( $s ) {		// проверка на содержание только букв и цифр
-    $s = preg_replace( "/[a-zA-ZА-Яа-яЁё0-9]/u", '', $s );
     $out = false;
-    if ($s == '') $out = true;
+    if ( preg_match("/\A[a-zA-ZА-Яа-яЁё0-9]{1,".LIMIT_LOGIN."}\z/u", $s) ) $out = true;
     return $out;
 }
 function check_symbol_en( $s ) {		// проверка на содержание только латинских букв
-    $s = preg_replace( "/[a-zA-Z]/", '', $s );
     $out = false;
-    if ($s == '') $out = true;
+    if ( preg_match("/\A[a-zA-Z]{1,".LIMIT_LOGIN."}\z/", $s) ) $out = true;
     return $out;
 }
 function check_role( $s ) {		// проверка на содержание только букв AWR
     $out = false;
-    if  ( preg_match( "/[AWR]/", $s ) ) $out = true;
+    if  ( preg_match( "/\A[AWR]\z/", $s ) ) $out = true;
     return $out;
 }
 function check_numeric( $num ){		// проверка на целое положительное число 
@@ -157,19 +164,11 @@ function check_like_query( $data , $table_name ){	// если разрешить
 	$out = false;
 	switch ( $table_name ) {
 		case 'users':
-			if ( preg_match("/^%?[a-zA-ZА-Яа-яЁё0-9]+%?\z/u", $data) ) $out = true;
+			if ( preg_match("/\A%?[a-zA-ZА-Яа-яЁё0-9]+%?\z/u", $data) ) $out = true;
 			break;
 	}
 	return $out;
 }
-// function name_user( $id ){	// получить имя по id
-// 	$out = '';
-// 	if ( check_numeric($id) ){
-// 		$user = R::load( 'users' , $id);
-// 		if ($user->name) $out = $user->name;
-// 	}
-// 	return $out;
-// }
 function del_fields( $id , $table_name ){
 	$errors = array();
 	if ( check_numeric($id) ) {
@@ -358,5 +357,70 @@ function list_fields( $table_name ){
 	if ( $page < $out['last'] ) $out['next'] = $page+1;
 	else $out['next'] = false;	
 	return $out;
+}
+function one_item( $id , $table_name ){
+	if ( check_numeric($id) ){
+		$item = R::load( $table_name , $id );
+		if ( $item->id ) {
+			$out = $item;
+			$out->password = '';
+		}
+	}
+	return $out;
+}
+function change_pass( $data , $table_name , $id ){
+	$errors = array();
+	if ( check_symbol($data['old_pass']) == false) $errors[] = 'Используйте в пароле только буквы и цифры';	
+	if ( mb_strlen($data['old_pass'] , 'UTF-8') > LIMIT_PASSWORD) 
+		$errors[] = 'Длина пароля должна быть не больше '.LIMIT_PASSWORD.' символов';
+	if ( check_symbol($data['new_pass']) == false) $errors[] = 'Используйте в пароле только буквы и цифры';	
+	if ( mb_strlen($data['new_pass'] , 'UTF-8') > LIMIT_PASSWORD) 
+		$errors[] = 'Длина пароля должна быть не больше '.LIMIT_PASSWORD.' символов';
+	if ( $data['old_pass'] == $data['new_pass'] ) $errors[] = 'Вы ввели одинаковые пароли';
+	if ( empty($errors) ){
+		$item = R::load( $table_name , $id );
+		if ( $item->id ) {
+			if ( $item->password == hash('SHA256' , $data['old_pass']) ){
+				$item->password = hash('SHA256' , $data['new_pass']);
+				R::begin();
+				try{
+					R::store($item);
+					R::commit();
+				}catch (Exception $e){
+					R::rollback();
+					$errors[] = 'Нет связи';
+				}
+			} else $errors[] = 'Старый пароль не верен';
+		} else $errors[] = 'Пользователь не найден';
+	}
+	if ( empty($errors) ) $_SESSION['messages'][] = 'Пароль изменен успешно';
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
+}
+function change_data( $data , $table_name , $id ){
+	global $arr_state, $arr_role;
+	$errors = array();
+	if ( check_symbol($data['login']) == false) $errors[] = "Логин должен быть не больше ".LIMIT_LOGIN." букв и цифр";
+	if ( in_array($data['role'], $arr_role) == false ) $errors[] = 'Выберите роль из списка';
+	if ( in_array($data['state'], $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
+	if ( empty($errors) ){
+		$item = R::load( $table_name , $id );
+		if ( $item->id ) {
+			if ( ($item->login != $data['login']) || ($item->role != $data['role']) || ($item->state != $data['state']) ){
+				$item->login = $data['login'];
+				$item->role = $data['role'];
+				$item->state = $data['state'];
+				R::begin();
+				try{
+					R::store($item);
+					R::commit();
+				}catch (Exception $e){
+					R::rollback();
+					$errors[] = 'Нет связи';
+				}
+			} else $errors[] = 'Вы не изменили данные';
+		} else $errors[] = 'Пользователь не найден';
+	}
+	if ( empty($errors) ) $_SESSION['messages'][] = 'Данные изменены успешно';
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
 ?>
