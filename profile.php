@@ -1,43 +1,48 @@
 <?php 
-$title = 'Профиль';
-include 'model.php';
-if ( empty($_SESSION['users']->limit) ) {
-	$_SESSION['users'] = new table_settings;
-}
-if ( ! empty($_GET) ) {		// изменение страницы отображения списка пользователей
-	if ( isset($_GET['del']) )  del_fields( $_GET['del'] , 'users' ); 			            // удаление
-	if ( isset($_GET['st']) ) state_fields( $_GET['st'] , 'users' ); 			            // состояние
-	if ( isset($_GET['lu']) ) limit_fields( $_GET['lu'] , 'users' ); 			            // лимит на страницу
-	header('Location: /profile.php');	// для очистки адресной строки
-} else {
-	if ( isset($_POST['n_page']) )   	  page_fields( $_POST['n_page'] , 'users' ); 		// номер страницы
-	if ( isset($_POST['do_sort']) ) 	  sort_fields( $_POST , 'users' );
-	if ( isset($_POST['do_find']) ) 	  find_fields( $_POST , 'users' );
-	if ( isset($_POST['do_clear_find']) ) find_fields( array() , 'users' );
-	if ( empty($_SESSION['users']->find_form[0]) ) $find_form[0] = array('id', '');
-	else $find_form = $_SESSION['users']->find_form;
-	// v($_POST);
-	// v($_SESSION['users']->find_form);
-	// v($_SESSION['users']);
-	// $_SESSION['users']->where = 'WHERE role LIKE ? AND state LIKE ? AND state LIKE ?';
+	$title = 'Профиль';
+	include 'model.php';
+	if ( empty($_SESSION['set_item']['user']) ) {
+		$_SESSION['set_item']['user'] = new item_settings;
+	}
+	$settings = &$_SESSION['set_item']['user'];
+	if ( isset($_POST['user_id']) ) {
+		$settings->id = $_POST['user_id'];
+	}
+	if ( isset($_POST['reset_user_id']) ) {
+		unset( $settings->id );
+	}
+	if ( $settings->id ) {
+		$user_info = one_item( $settings->id , 'users' );
+	}
+	if ( ! $user_info->id ) $user_info = $_SESSION['logged_user'];
 
-	// $user = R::load('users', 29);
-	// $enter = R::dispense('enter');
-	// $enter->date = 'Вчера заходил вроде';
-	// $user->xownEnterList[] = $enter;
-	// R::store($user);
+	if ( isset($_POST['do_change_pass']) ) change_pass( $_POST , 'users' , $user_info->id );
+	if ( isset($_POST['do_change_data']) ) {
+		change_data( $_POST , 'users' , $user_info->id );
+		if ( ! $user_info->id ) $user_info = $_SESSION['logged_user'];
+		else $user_info = one_item( $user_info->id , 'users' );
+	}	
+			  // $test = '12345678901234567890123456789012345678901234567890123456789Ё';
+			  // v(check_symbol($test));
+			// v($_SESSION['users']->find_form);
+			// v($_SESSION['messages']);
+			// v($_POST);
+			// $_SESSION['users']->where = 'WHERE role LIKE ? AND state LIKE ? AND state LIKE ?';
+
+			// $user = R::load('users', 29);
+			// $enter = R::dispense('enter');
+			// $enter->date = 'Вчера заходил вроде';
+			// $user->xownEnterList[] = $enter;
+			// R::store($user);
 
 	include 'tpl/head.html';
 	include 'tpl/errors.html';
 	include 'tpl/message.html';
 	if ( isset($_SESSION['logged_user']) ) {
-	    include 'tpl/header/user.html';
+		include 'tpl/header/user.html';
 	} else {
-	    include 'tpl/header/guest.html';
+		include 'tpl/header/guest.html';
 	}
-	$info = list_fields( 'users' );
 	include 'tpl/body/profile.html';
 	include 'tpl/footer.html';
-	$_SESSION['users']->message = '';
-}
 ?>

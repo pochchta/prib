@@ -50,6 +50,10 @@
 	overflow: hidden;
 	padding: 0;
 }
+.users .user:hover{
+	background-color: #eee;
+	cursor: pointer;
+}
 .users .state.on{
 	background-color: green;
 	padding-right: 2px;
@@ -143,3 +147,12 @@ div.tr:last-child .td{
 	color: black;
 }
 
+#hidden_form{
+	display: none;
+}
+
+#form_change_data .border{
+	border: 1px solid black;
+	margin: 10px 0;
+	padding: 10px;
+}

@@ -1,151 +1,83 @@
-<div>Имя пользователя: <?php echo $_SESSION['logged_user']->login ?></div>
-<div>Роль пользователя: <?php echo $arr_name_role[$_SESSION['logged_user']->role] ?></div>
-<p></p>
-<div>
-	Список пользователей (<?php echo $info['count'] ?> всего):
-	<?php echo "({$_SESSION['users']->limit} на странице)"?>
-</div>
+<a href="/userlist.php">Список пользователей</a>
 
-<div class="users table">
-	<div class="tr">
-		<div class="user td">Имя</div>
-		<div class="td">Роль</div>
-		<div class="td"></div>
-		<div class="td"></div>
-		<div class="td"></div>
-	</div>
-	<?php
-		foreach ($info['users'] as $user){
-			echo "<div class='tr'>";
-	    	echo "<div class='user td {$user->state}'>{$user->login}</div>";
-	    	echo "<div class='role td {$user->state}'>{$user->role} ({$arr_name_role[$user->role]})</div>";
-	    	echo "<div class='state td {$user->state}'>{$user->state}</div>";
-	    	echo "<div class='td'><a href='?st={$user->id}'>{$arr_name_state[$user->state]}</a></div>";
-	    	echo "<div class='td'><a href='#' onClick='show_popup_remove({$user->id}, \"{$user->login}\")'>удалить</a></div>";
-		    echo "</div>";
-		}
-	?>
-</div>
-<p></p>
-<div class="navi">
-	<form action="/profile.php" method="POST" id="n_page">
-		<a <?php if ( $info['first'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['first'] ?>)">первая(<?php echo $info['first'] ?>)</a>
-		<a <?php if ( $info['prev'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['prev'] ?>)">назад(<?php echo $info['prev'] ?>)</a>
-		<input type='text' id='n_page_input' value="<?php echo $info['curr'] ?>" name='n_page'>
-		<a <?php if ( $info['next'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['next'] ?>)">вперед(<?php echo $info['next'] ?>)</a>
-		<a <?php if ( $info['last'] !== false ) echo 'href=#' ?> onClick="set_page(<?php echo $info['last'] ?>)">последняя(<?php echo $info['last'] ?>)</a>
-	</form>
-	<div>
-		<?php		
-			foreach ($arr_limit_users as $limit){
-				if ( $limit != $_SESSION['users']->limit ) echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
-		   		else echo "<a class='limit'>{$limit}</a>";
-			}
-		?>
-	</div>
-	<form class="sort" action="/profile.php" method="POST">
-		<p>Сортировка:</p>
-		<select name="sort">
-			<option value="id" <?php if($_SESSION['users']->sort == 'id') echo 'selected'?>>Номер</option>
-			<option value="login" <?php if($_SESSION['users']->sort == 'login') echo 'selected'?>>Имя пользователя</option>
-			<option value="role" <?php if($_SESSION['users']->sort == 'role') echo 'selected'?>>Роль</option>
-			<option value="state" <?php if($_SESSION['users']->sort == 'state') echo 'selected'?>>Состояние</option>
-		</select>
-		<p>обратная</p>
-		<input type="checkbox" <?php if($_SESSION['users']->desc == 'on') echo 'checked'?> name="desc">
+<form action="/profile.php" method="POST" id="form_change_data">
+	<div class="border">
 		<p>
-			<button type="submit" name="do_sort">ОК</button>
+			Имя пользователя: <input type="text" value="<?php echo $user_info->login ?>" name="login">
+			<?php if ( $user_info->id != $_SESSION['logged_user']->id ) : ?>
+				<button type="submit" name="reset_user_id">Вернуться в свой профиль</button>
+			<?php endif ?>
 		</p>
-	</form>
-	<form action="/profile.php" method="POST" id="find_form">
-		<?php
-			$count_find_block = 0;
-			foreach ($find_form as $find_block) : 
-		?>
-			<div class="find sort" id="find_block<?php if ($count_find_block) echo $count_find_block ?>">
-				<p>Поиск:</p>
-				<select name="find<?php if ($count_find_block) echo $count_find_block ?>">
-					<option value="login" <?php if($find_block['find'] == 'login') echo 'selected'?>>Имя пользователя</option>
-					<option value="role" <?php if($find_block['find'] == 'role') echo 'selected'?>>Роль</option>
-					<option value="state" <?php if($find_block['find'] == 'state') echo 'selected'?>>Состояние</option>
-				</select>
-				<input type="text" name="text<?php if ($count_find_block) echo $count_find_block ?>" value="<?php echo $find_block['text'] ?>" class="<?php if ( $find_block['error'] != '') echo 'error'?>">
-				<a href="#" class="link_add" onclick="add_find_block()">+</a>
-				<?php echo "<a href='#' class='link_add link_rem' onclick='remove_find_block({$count_find_block})'>-</a>"; ?>
-			</div>
-		<?php
-			$count_find_block++;
-			endforeach 
-		?>
-		<div class="find sort" id="find_button">
-			<p>
-				<button type="submit" name="do_find">Искать</button>
-				<button type="submit" name="do_clear_find">Очистить</button>
-			</p>
-		</div>
-	</form>
-</div>
+		<p>
+			Роль пользователя:
+			<select name="role">
+				<option value="A" <?php if ( $user_info->role == "A" ) echo selected ?> >A</option>
+				<option value="W" <?php if ( $user_info->role == "W" ) echo selected ?> >W</option>
+				<option value="R" <?php if ( $user_info->role == "R" ) echo selected ?> >R</option>
+			</select>
+			(<?php echo $arr_name_role[$user_info->role] ?>)
+		</p>
+		<p>
+			Состояние пользователя:
+			<select name="state">
+				<option value="on" <?php if ( $user_info->state == "on" ) echo selected ?> >on</option>
+				<option value="off" <?php if ( $user_info->state == "off" ) echo selected ?> >off</option>
+			</select>
+			(<?php echo $arr_name_state[$user_info->state] ?>)
+		</p>
+		<p>
+			<?php if ( $user_info->id != $_SESSION['logged_user']->id ) : ?>
+				<button type="submit" name="do_change_data">Сохранить данные</button>
+			<?php else : ?>
+				<button type="button" onClick="show_popup_post( 'Сохранить данные своего аккаунта,' , '<?php echo $user_info->login ?>' , 'form_change_data' )">Сохранить данные</button>
+				<input type="hidden" id="do_change_data">
+			<?php endif ?>	
+		</p>	
+	</div>
+	<div class="border">
+		<p>
+			<span>Смена пароля:</span>
+		</p>
+		<p>
+			<span>Старый пароль:</span>
+			<input type="password" name="old_pass">
+		</p>
+		<p>
+			<span>Новый пароль:</span>
+			<input type="password" name="new_pass">
+		</p>
+		<p>
+			<button type="submit" name="do_change_pass">Сменить пароль</button>
+		</p>
+	</div>
+</form>
 
-<div class="popup" id='popup_remove'>
-	<p>Удалить пользователя</p>
-	<p id="login_popup_remove"></p>
+<div class="popup" id='popup'>
+	<p id="popup_text"></p>
+	<p id="popup_login"></p>
 	<div class="buttons">
-		<a href="#" id="yes_popup_remove">да</a>
-		<a href="#" onClick="hide_popup_remove()">нет</a>
+		<a href="#" id="popup_yes">да</a>
+		<a href="#" id="popup_no">нет</a>
 	</div>		
 </div>
-
 <script>
-	var n=<?php echo $count_find_block ?>;
-	function add_find_block(){
-		var form = document.getElementById("find_form");
-		var button = document.getElementById("find_button");
-		var div = document.getElementById("find_block");
-		var new_div = div.cloneNode(true);
-		new_div.setAttribute('id', 'find_block'+n);
-		var select = new_div.getElementsByTagName('select');
-		var input = new_div.getElementsByTagName('input');
-		select[0].setAttribute('name', 'find'+n);
-		select[0].selectedIndex = 0;
-		input[0].setAttribute('name', 'text'+n);
-		input[0].value = '';
-		input[0].setAttribute('class', '');
-		var link_rem = new_div.getElementsByClassName("link_rem");
-		link_rem[0].setAttribute( 'onclick', 'remove_find_block(' + n + ')' );
-		form.insertBefore(new_div, button);
-		// setTimeout(function func() {
-		// 	window.scrollTo(button.offsetLeft, button.offsetTop);
-		// }, 100);
-		n++;
-	}
-	function remove_find_block(n_rem){
-		if (n_rem == 0){
-			var div = document.getElementById("find_block");
-			var input = div.getElementsByTagName('input');
-			input[0].value = '';			
-		} else {
-			var div = document.getElementById("find_block"+n_rem);
-			var form = document.getElementById("find_form");
-			form.removeChild(div);
-		}
-	}
-	function show_popup_remove( id , login) {
-		var popup = document.getElementById("popup_remove");
-		var yes = document.getElementById("yes_popup_remove");
-		yes.setAttribute('href', '?del='+id);
-		var p_login = document.getElementById("login_popup_remove");
-		p_login.innerHTML = login + "?";
+	function show_popup_post( text, login, form_name ) {
+		var popup = document.getElementById("popup");
+		var popup_text = document.getElementById("popup_text");
+		var popup_login = document.getElementById("popup_login");
+		var popup_yes = document.getElementById("popup_yes");
+		popup_text.innerHTML = text;
+		popup_login.innerHTML = login + "?";
+		popup_yes.setAttribute( 'onclick', 'yes_popup("'+form_name+'")' );
+		popup_no.setAttribute( 'onclick', 'hide_popup()' );
 		popup.setAttribute('style', 'display:block');
-
 	}
-	function hide_popup_remove(){
-		document.getElementById('popup_remove').setAttribute('style', 'display:none');
+	function hide_popup(){
+		document.getElementById('popup').setAttribute('style', 'display:none');
 	}
-	function set_page( n_page ) {
-		if (n_page != null){
-			var hidden = document.getElementById("n_page_input");
-			hidden.value = n_page;
-			document.forms['n_page'].submit();
-		}
+	function yes_popup( form_name ){
+		var hidden = document.getElementById("do_change_data");
+		hidden.setAttribute( 'name', 'do_change_data' );
+		document.forms[form_name].submit();
 	}
-</script>
+</script>	
