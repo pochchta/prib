@@ -1,4 +1,6 @@
-<a href="/userlist.php">Список пользователей</a>
+<?php if ( test_perm('r_users' , true) ) : ?>
+	<a href="/userlist.php">Список пользователей</a>
+<?php endif ?>
 
 <form action="/profile.php" method="POST" id="form_change_data">
 	<div class="border">

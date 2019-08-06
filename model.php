@@ -34,6 +34,8 @@ $arr_button_state = array(		// инвертированные названия �
 $arr_perm = array(				// разрешения
 	'w_user_data' =>  array ('A'),		// запись
 	'w_user_pass' =>  array ('A'),
+	'w_user_del' =>   array ('A'),
+
 
 	'w_self_pass' =>  array ('A', 'W', 'R'),
 
@@ -83,7 +85,7 @@ function test_perm( $perm_name , $not_errors=false){	// имя операции,
 				if ( in_array($_SESSION['logged_user']->role, $arr_perm[$perm_name]) ) $out = true;
 				else $errors[] = 'Нет прав доступа';
 			else $errors[] = 'Ваш аккаунт заблокирован';
-		else $errors[] = 'Выполните вход в систему';
+		else $errors[] = 'Нет прав доступа. Выполните вход в систему';
 	else $errors[] = 'Неизвестная операция';
 	if ( $not_errors == false )
 		$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
