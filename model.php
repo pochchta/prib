@@ -31,6 +31,18 @@ $arr_button_state = array(		// инвертированные названия �
 	'off' => 'включить',
 	'on' => 'выключить'
 );
+$arr_perm = array(				// разрешения
+	'w_user_data' =>  array ('A'),		// запись
+	'w_user_pass' =>  array ('A'),
+
+	'w_self_pass' =>  array ('A', 'W', 'R'),
+
+	'r_users' => array ('A'),		    // чтение
+	'r_user' =>  array ('A'),
+
+	'r_self' =>  array ('A', 'W', 'R')
+
+);
 //QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 
 class table_settings{
@@ -39,7 +51,7 @@ class table_settings{
 	var $sort;
 	var $desc;
 	var $find_form;
-	var $where;		    // запрос "where name like ?"
+	var $where;		    // запрос вида "where name like ?"
 	var $arr_where;		// массив для этого запроса
 	var $message;
 	var $out;
@@ -61,6 +73,22 @@ function v( $data ){	// var dump с построчным выводом
 	echo'<pre>',var_dump($data),'</pre>';
 }
 
+function test_perm( $perm_name , $not_errors=false){	// имя операции, подавление ошибок
+	$out = false;
+	$errors = array();
+	global $arr_perm;
+	if ( $arr_perm[$perm_name] )
+		if ( isset($_SESSION['logged_user']) )
+			if ( $_SESSION['logged_user']->state == 'on' )
+				if ( in_array($_SESSION['logged_user']->role, $arr_perm[$perm_name]) ) $out = true;
+				else $errors[] = 'Нет прав доступа';
+			else $errors[] = 'Ваш аккаунт заблокирован';
+		else $errors[] = 'Выполните вход в систему';
+	else $errors[] = 'Неизвестная операция';
+	if ( $not_errors == false )
+		$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
+	return $out;
+}
 function logging_user($data){	// аутентификация (POST на вход)
 	$errors = array();
 	if ( is_null($_SESSION['logged_user']) ){

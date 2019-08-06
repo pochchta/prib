@@ -3,14 +3,14 @@
 <form action="/profile.php" method="POST" id="form_change_data">
 	<div class="border">
 		<p>
-			Имя пользователя: <input type="text" value="<?php echo $user_info->login ?>" name="login">
+			Имя пользователя: <input type="text" value="<?php echo $user_info->login ?>" name="login" <?php if (!test_perm('w_user_data',true)) echo 'disabled'?>>
 			<?php if ( $user_info->id != $_SESSION['logged_user']->id ) : ?>
 				<button type="submit" name="reset_user_id">Вернуться в свой профиль</button>
 			<?php endif ?>
 		</p>
 		<p>
 			Роль пользователя:
-			<select name="role">
+			<select name="role" <?php if (!test_perm('w_user_data',true)) echo 'disabled'?>>
 				<option value="A" <?php if ( $user_info->role == "A" ) echo selected ?> >A</option>
 				<option value="W" <?php if ( $user_info->role == "W" ) echo selected ?> >W</option>
 				<option value="R" <?php if ( $user_info->role == "R" ) echo selected ?> >R</option>
@@ -19,7 +19,7 @@
 		</p>
 		<p>
 			Состояние пользователя:
-			<select name="state">
+			<select name="state" <?php if (!test_perm('w_user_data',true)) echo 'disabled'?>>
 				<option value="on" <?php if ( $user_info->state == "on" ) echo selected ?> >on</option>
 				<option value="off" <?php if ( $user_info->state == "off" ) echo selected ?> >off</option>
 			</select>
@@ -29,7 +29,7 @@
 			<?php if ( $user_info->id != $_SESSION['logged_user']->id ) : ?>
 				<button type="submit" name="do_change_data">Сохранить данные</button>
 			<?php else : ?>
-				<button type="button" onClick="show_popup_post( 'Сохранить данные своего аккаунта,' , '<?php echo $user_info->login ?>' , 'form_change_data' )">Сохранить данные</button>
+				<button type="button" onClick="show_popup_post( 'Сохранить данные своего аккаунта,' , '<?php echo $user_info->login ?>' , 'form_change_data' )" <?php if (!test_perm('w_user_data',true)) echo 'disabled'?>>Сохранить данные</button>
 				<input type="hidden" id="do_change_data">
 			<?php endif ?>	
 		</p>	
