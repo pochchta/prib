@@ -21,7 +21,8 @@
 	    	echo "<div class='role td {$user->state}'>{$user->role} ({$arr_name_role[$user->role]})</div>";
 	    	echo "<div class='state td {$user->state}'>{$user->state}</div>";
 	    	echo "<div class='td'><a href='?st={$user->id}'>{$arr_button_state[$user->state]}</a></div>";
-	    	echo "<div class='td'><a href='#' onClick='show_popup_remove({$user->id}, \"{$user->login}\")'>удалить</a></div>";
+	    	$on_click = "show_popup_get('Удалить пользователя', '{$user->login}', '?del='+'{$user->id}')";
+	    	echo "<div class='td'><a href='#' onClick=\"{$on_click}\">удалить</a></div>";
 		    echo "</div>";
 		}
 	?>
@@ -86,13 +87,13 @@
 	</form>
 </div>
 
-<div class="popup" id='popup_remove'>
-	<p>Удалить пользователя</p>
-	<p id="login_popup_remove"></p>
+<div class="popup" id='popup'>
+	<p id="popup_text"></p>
+	<p id="popup_login"></p>
 	<div class="buttons">
-		<a href="#" id="yes_popup_remove">да</a>
-		<a href="#" onClick="hide_popup_remove()">нет</a>
-	</div>		
+		<a href="#" id="popup_yes">да</a>
+		<a href="#" id="popup_no">нет</a>
+	</div>
 </div>
 
 <form action="/profile.php" method="POST" id=hidden_form>
@@ -133,18 +134,20 @@
 			form.removeChild(div);
 		}
 	}
-	function show_popup_remove( id , login) {
-		var popup = document.getElementById("popup_remove");
-		var yes = document.getElementById("yes_popup_remove");
-		yes.setAttribute('href', '?del='+id);
-		var p_login = document.getElementById("login_popup_remove");
-		p_login.innerHTML = login + "?";
+	function show_popup_get( text, login, get_str) {
+		var popup = document.getElementById("popup");
+		var popup_text = document.getElementById("popup_text");
+		var popup_login = document.getElementById("popup_login");
+		var popup_yes = document.getElementById("popup_yes");		
+		popup_text.innerHTML = text;
+		popup_login.innerHTML = login + "?";
+		popup_yes.setAttribute('href', get_str);
+		popup_no.setAttribute( 'onclick', 'hide_popup()' );
 		popup.setAttribute('style', 'display:block');
-
-	}
-	function hide_popup_remove(){
-		document.getElementById('popup_remove').setAttribute('style', 'display:none');
-	}
+	}	
+	function hide_popup(){
+		document.getElementById('popup').setAttribute('style', 'display:none');
+	}	
 	function set_page( n_page ) {
 		if (n_page != null){
 			var hidden = document.getElementById("n_page_input");

@@ -60,8 +60,9 @@
 	<div class="buttons">
 		<a href="#" id="popup_yes">да</a>
 		<a href="#" id="popup_no">нет</a>
-	</div>		
+	</div>
 </div>
+
 <script>
 	function show_popup_post( text, login, form_name ) {
 		var popup = document.getElementById("popup");
@@ -70,14 +71,14 @@
 		var popup_yes = document.getElementById("popup_yes");
 		popup_text.innerHTML = text;
 		popup_login.innerHTML = login + "?";
-		popup_yes.setAttribute( 'onclick', 'yes_popup("'+form_name+'")' );
+		popup_yes.setAttribute( 'onclick', 'send_form("'+form_name+'")' );
 		popup_no.setAttribute( 'onclick', 'hide_popup()' );
 		popup.setAttribute('style', 'display:block');
 	}
 	function hide_popup(){
 		document.getElementById('popup').setAttribute('style', 'display:none');
 	}
-	function yes_popup( form_name ){
+	function send_form( form_name ){		// отправка формы, еще устанавливается name = "do_change_data" для скрытого поля
 		var hidden = document.getElementById("do_change_data");
 		hidden.setAttribute( 'name', 'do_change_data' );
 		document.forms[form_name].submit();
