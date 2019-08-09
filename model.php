@@ -14,6 +14,7 @@ if ( ! isset($_SESSION['messages']) ) $_SESSION['messages'] = array();
 define("LIMIT_LOGIN", 60, true);			// длина строки
 define("LIMIT_PASSWORD", 60, true);
 define("LIMIT_ROLE", 1, true);
+define("LIMIT_QUERY", 100, true);			// лимит на одно поле поиска
 define("LIMIT_FIELDS", 1999999999, true);	// лимит записей в таблице
 $arr_limit_users = array(3,5,10,20);   // массивы констант с php 5.6
 $arr_sort_users = array('id', 'login', 'role', 'state');
@@ -36,7 +37,6 @@ $arr_perm = array(				// разрешения
 	'w_user_data' =>  array ('A'),		// запись
 	'w_user_pass' =>  array ('A'),
 	'w_user_del' =>   array ('A'),
-
 
 	'w_self_pass' =>  array ('A', 'W', 'R'),
 
@@ -94,15 +94,9 @@ function test_perm( $perm_name , $not_errors=false){	// имя операции,
 }
 function logging_user($data){	// аутентификация (POST на вход)
 	$errors = array();
-	if ( is_null($_SESSION['logged_user']) ){
-		if( trim($data['login']) == '' ){
-			$errors[] = 'Введите логин';
-		}
-		if( trim($data['password']) == '' ){
-			$errors[] = 'Введите пароль';
-		}				
-		if ( check_symbol($data['login']) == false) $errors[] = 'Используйте в логине только буквы и цифры';
-		if ( check_symbol($data['password']) == false) $errors[] = 'Используйте в пароле только буквы и цифры';			
+	if ( is_null($_SESSION['logged_user']) ){			
+		if ( check_login($data['login']) == false) $errors[] = 'Логин - строка из букв и цифр длиной не более '.LIMIT_LOGIN;
+		if ( check_pass($data['password']) == false) $errors[] = 'Пароль - строка из букв и цифр длиной не более '.LIMIT_PASSWORD;
 		if ( empty($errors) ){		
 			$user = R::findOne( 'users' , 'login = ?' , array($data['login']));			
 			if ( $user->id ){
@@ -120,35 +114,22 @@ function logging_user($data){	// аутентификация (POST на вхо�
 	} else{
 		$errors[] = 'Вы уже авторизованы';
 	}
-	return $errors;
+	if ( empty($errors) ) $_SESSION['messages'][] = 'Вы вошли как '.$_SESSION['logged_user']->login;
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );	
 }
 function registering_user($data){		// регистрация (POST на вход)
-	$out['errors'] = array();
-	$out['ok'] = false;
-	if( trim($data['login']) == '' ){
-		$out['errors'][] = 'Введите логин';
-	}
-	if( trim($data['password']) == '' ){
-		$out['errors'][] = 'Введите пароль';
-	}
-	if( trim($data['role']) == '' ){
-		$out['errors'][] = 'Выберите роль';
-	}		
-	if ( check_symbol($data['login']) == false) $out['errors'][] = 'Используйте в логине только буквы и цифры';
-	if ( check_symbol($data['password']) == false) $out['errors'][] = 'Используйте в пароле только буквы и цифры';	
-	if ( check_role($data['role']) == false) $out['errors'][] = 'Выберите роль из списка';
-	if ( mb_strlen($data['login'] , 'UTF-8') > LIMIT_LOGIN) 
-		$out['errors'][] = 'Длина логина должна быть не больше '.LIMIT_LOGIN.' символов';
-	if ( mb_strlen($data['password'] , 'UTF-8') > LIMIT_PASSWORD) 
-		$out['errors'][] = 'Длина пароля должна быть не больше '.LIMIT_PASSWORD.' символов';
-	if ( mb_strlen($data['role'] , 'UTF-8') > LIMIT_ROLE) 
-		$out['errors'][] = 'Длина роли должна быть не больше '.LIMIT_ROLE.' символов';
-	if ( empty($out['errors']) ){
+	$errors = array();
+	// $data['login'] = trim( $data['login'] );
+	// $data['password'] = trim( $data['password'] );
+	if ( check_login($data['login']) == false) $errors[] = 'Логин - строка из букв и цифр длиной не более '.LIMIT_LOGIN;
+	if ( check_pass($data['password']) == false) $errors[] = 'Пароль - строка из букв и цифр длиной не более '.LIMIT_PASSWORD;
+	if ( check_role($data['role']) == false) $errors[] = 'Выберите роль из списка';
+	if ( empty($errors) ){
 		if( R::count( 'users' , "login = ?" , array($data['login']) ) ){
-			$out['errors'][] = 'Этот логин занят, введите другой';
+			$errors[] = 'Этот логин занят, введите другой';
 		}				
 	}
-	if ( empty($out['errors']) ){
+	if ( empty($errors) ){
 		// регистрируем
 		$user = R::dispense('users');
 		$user->login = $data['login'];
@@ -160,15 +141,25 @@ function registering_user($data){		// регистрация (POST на вход
 		try{
 			R::store($user);
 			R::commit();
-			$out['ok'] = true;
-			$out['login'] = $data['login'];
 		}catch (Exception $e){
 			R::rollback();
-			$out['errors'][] = 'Нет связи';
+			$errors[] = 'Нет связи';
 			// echo $e->getMessage();
 		}
 	}
-	return $out;
+	if ( empty($errors) ) $_SESSION['messages'][] = 'Регистрация прошла успешно, '.$user->login;
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );	
+}
+function check_login( $s ) {		// проверка на содержание только букв и цифр
+    $out = false;
+    if ( trim($s) != '' )
+   		if ( preg_match("/\A[a-zA-ZА-Яа-яЁё0-9]{1,".LIMIT_LOGIN."}\z/u", $s) ) $out = true;
+    return $out;
+}
+function check_pass( $s ) {		// проверка на содержание только букв и цифр
+    $out = false;
+    if ( preg_match("/\A[a-zA-ZА-Яа-яЁё0-9]{1,".LIMIT_PASSWORD."}\z/u", $s) ) $out = true;
+    return $out;
 }
 function check_symbol( $s ) {		// проверка на содержание только букв и цифр
     $out = false;
@@ -192,13 +183,14 @@ function check_numeric( $num ){		// проверка на целое полож�
 	}
 	return $out;
 }
-function check_like_query( $data , $table_name ){	// если разрешить пробелы, то нужно проверять что есть что-то кроме пробелов
+function check_like_query( $data , $table_name ){
 	$out = false;
-	switch ( $table_name ) {
-		case 'users':
-			if ( preg_match("/\A%?[a-zA-ZА-Яа-яЁё0-9]+%?\z/u", $data) ) $out = true;
-			break;
-	}
+    if ( trim($s) != '' )
+		switch ( $table_name ) {
+			case 'users':
+				if ( preg_match("/\A%?[a-zA-ZА-Яа-яЁё0-9]{1,".LIMIT_QUERY."}%?\z/u", $data) ) $out = true;
+				break;
+		}
 	return $out;
 }
 function del_fields( $id , $table_name ){
@@ -402,12 +394,8 @@ function one_item( $id , $table_name ){
 }
 function change_pass( $data , $table_name , $id ){
 	$errors = array();
-	if ( check_symbol($data['old_pass']) == false) $errors[] = 'Используйте в пароле только буквы и цифры';	
-	if ( mb_strlen($data['old_pass'] , 'UTF-8') > LIMIT_PASSWORD) 
-		$errors[] = 'Длина пароля должна быть не больше '.LIMIT_PASSWORD.' символов';
-	if ( check_symbol($data['new_pass']) == false) $errors[] = 'Используйте в пароле только буквы и цифры';	
-	if ( mb_strlen($data['new_pass'] , 'UTF-8') > LIMIT_PASSWORD) 
-		$errors[] = 'Длина пароля должна быть не больше '.LIMIT_PASSWORD.' символов';
+	if ( check_pass($data['old_pass']) == false) $errors[] = 'Старый пароль - строка из букв и цифр длиной не более '.LIMIT_PASSWORD;
+	if ( check_pass($data['new_pass']) == false) $errors[] = 'Новый пароль - строка из букв и цифр длиной не более '.LIMIT_PASSWORD;
 	if ( $data['old_pass'] == $data['new_pass'] ) $errors[] = 'Вы ввели одинаковые пароли';
 	if ( empty($errors) ){
 		$item = R::load( $table_name , $id );
@@ -431,7 +419,8 @@ function change_pass( $data , $table_name , $id ){
 function change_data( $data , $table_name , $id ){
 	global $arr_state, $arr_role;
 	$errors = array();
-	if ( check_symbol($data['login']) == false) $errors[] = "Логин должен быть не больше ".LIMIT_LOGIN." букв и цифр";
+	// $data['login'] = trim( $data['login'] );
+	if ( check_login($data['login']) == false) $errors[] = 'Логин - строка из букв и цифр длиной не более '.LIMIT_LOGIN;
 	if ( in_array($data['role'], $arr_role) == false ) $errors[] = 'Выберите роль из списка';
 	if ( in_array($data['state'], $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
 	if ( empty($errors) ){
