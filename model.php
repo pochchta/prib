@@ -1,4 +1,5 @@
 <?php 
+date_default_timezone_set('Asia/Irkutsk');
 require 'libs/rb.php';					// RedBean php
 // R::setup( 'mysql:host=localhost;dbname=devices', 'userbd', '2' ); //for both mysql or mariaDB
 R::setup( 'mysql:host=localhost;dbname=devices', 'root', '' ); //for both mysql or mariaDB
@@ -105,7 +106,7 @@ function logging_user($data){	// аутентификация (POST на вхо�
 		if ( empty($errors) ){		
 			$user = R::findOne( 'users' , 'login = ?' , array($data['login']));			
 			if ( $user->id ){
-				if ( hash( 'SHA256' , $data['password'] ) == $user->password){
+				if ( hash( 'SHA256' , $data['password'].$user->time ) == $user->password){
 					// вход
 					$_SESSION['logged_user'] = $user;
 					$_SESSION['logged_user']->password = '';
@@ -153,7 +154,8 @@ function registering_user($data){		// регистрация (POST на вход
 		$user->login = $data['login'];
 		$user->role = $data['role'];
 		$user->state = 'on';
-		$user->password = hash( 'SHA256' , $data['password'] );
+		$user->time = date("m.d.y H:i:s");
+		$user->password = hash( 'SHA256' , $data['password'].$user->time );
 		R::begin();
 		try{
 			R::store($user);
@@ -410,8 +412,8 @@ function change_pass( $data , $table_name , $id ){
 	if ( empty($errors) ){
 		$item = R::load( $table_name , $id );
 		if ( $item->id ) {
-			if ( $item->password == hash('SHA256' , $data['old_pass']) ){
-				$item->password = hash('SHA256' , $data['new_pass']);
+			if ( $item->password == hash('SHA256' , $data['old_pass'].$item->time) ){
+				$item->password = hash('SHA256' , $data['new_pass'].$item->time);
 				R::begin();
 				try{
 					R::store($item);

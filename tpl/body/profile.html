@@ -27,6 +27,7 @@
 			</select>
 			(<?php echo $arr_name_state[$user_info->state] ?>)
 		</p>
+		<p>Дата регистрации: <?php echo $_SESSION['logged_user']->time ?></p>		
 		<p>
 			<?php if ( $user_info->id != $_SESSION['logged_user']->id ) : ?>
 				<button type="submit" name="do_change_data">Сохранить данные</button>
@@ -34,7 +35,7 @@
 				<button type="button" onClick="show_popup_post( 'Сохранить данные своего аккаунта,' , '<?php echo $user_info->login ?>' , 'form_change_data' )" <?php if (!test_perm('w_user_data',true)) echo 'disabled'?>>Сохранить данные</button>
 				<input type="hidden" id="do_change_data">
 			<?php endif ?>	
-		</p>	
+		</p>
 	</div>
 	<div class="border">
 		<p>
