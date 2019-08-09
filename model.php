@@ -266,8 +266,8 @@ function limit_fields( $limit , $table_name ){
 	}	
 	if ( check_numeric($limit) ) {
 		if ( in_array($limit, $arr_valid_limit) ) {
-			// $_SESSION[$table_name]->page = (int)($_SESSION[$table_name]->page * $_SESSION[$table_name]->limit / $limit);
-			$_SESSION[$table_name]->limit = $limit;
+			// $_SESSION['set_list'][$table_name]->page = (int)($_SESSION['set_list'][$table_name]->page * $_SESSION['set_list'][$table_name]->limit / $limit);
+			$_SESSION['set_list'][$table_name]->limit = $limit;
 		} else{
 			$errors[] = 'Недопустимый параметр лимита';
 		}
@@ -279,8 +279,8 @@ function limit_fields( $limit , $table_name ){
 function page_fields( $page , $table_name  ){
 	$errors = array();
 	if ( check_numeric($page + 1) ) {
-		if ( $_SESSION[$table_name]->limit * $page < LIMIT_FIELDS ) {
-			$_SESSION[$table_name]->page = (int)$page;
+		if ( $_SESSION['set_list'][$table_name]->limit * $page < LIMIT_FIELDS ) {
+			$_SESSION['set_list'][$table_name]->page = (int)$page;
 		} else{
 			$errors[] = 'Страница не найдена';
 		}
@@ -299,9 +299,9 @@ function sort_fields( $data , $table_name ){
 			break;
 	}
 	if ( in_array($data['sort'], $arr_valid_sort) ){
-		$_SESSION[$table_name]->sort = $data['sort'];
-		if ( $data['desc'] == 'on' ) $_SESSION[$table_name]->desc = 'on';
-		else $_SESSION[$table_name]->desc = '';
+		$_SESSION['set_list'][$table_name]->sort = $data['sort'];
+		if ( $data['desc'] == 'on' ) $_SESSION['set_list'][$table_name]->desc = 'on';
+		else $_SESSION['set_list'][$table_name]->desc = '';
 	} else{
 		$errors[] = 'Недопустимый параметр сортировки';
 	}
@@ -356,25 +356,25 @@ function find_fields( $data , $table_name ){		// поиск в таблице (P
 			$find = '';
 		}
 	}
-	$_SESSION[$table_name]->find_form = $out;
-	$_SESSION[$table_name]->where = $where;
-	$_SESSION[$table_name]->arr_where = $arr_where;
-	// $_SESSION[$table_name]->page = 0;
+	$_SESSION['set_list'][$table_name]->find_form = $out;
+	$_SESSION['set_list'][$table_name]->where = $where;
+	$_SESSION['set_list'][$table_name]->arr_where = $arr_where;
+	// $_SESSION['set_list'][$table_name]->page = 0;
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 	// return $out;
 }
 function list_fields( $table_name ){
-	$count = R::count($table_name, "{$_SESSION[$table_name]->where}", $_SESSION[$table_name]->arr_where);
-	$page = $_SESSION[$table_name]->page;
-	$limit = $_SESSION[$table_name]->limit;
+	$count = R::count($table_name, "{$_SESSION['set_list'][$table_name]->where}", $_SESSION['set_list'][$table_name]->arr_where);
+	$page = $_SESSION['set_list'][$table_name]->page;
+	$limit = $_SESSION['set_list'][$table_name]->limit;
 	if ( (int)( ($count-1) / $limit ) < $page ) {
 		$page = (int)( ($count-1) / $limit );
-		$_SESSION[$table_name]->page = $page;
+		$_SESSION['set_list'][$table_name]->page = $page;
 	}
-	if ( $_SESSION[$table_name]->desc == 'on' ) $direction = 'DESC';
+	if ( $_SESSION['set_list'][$table_name]->desc == 'on' ) $direction = 'DESC';
 	else $direction = 'ASC';
 	$start = $page * $limit;
-	$out[$table_name] = R::find($table_name, "{$_SESSION[$table_name]->where} ORDER BY {$_SESSION[$table_name]->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION[$table_name]->arr_where);
+	$out[$table_name] = R::find($table_name, "{$_SESSION['set_list'][$table_name]->where} ORDER BY {$_SESSION['set_list'][$table_name]->sort} {$direction} LIMIT {$start},{$limit}", $_SESSION['set_list'][$table_name]->arr_where);
 	
 	$out['count'] = $count;
 	$out['curr'] = $page;

@@ -2,8 +2,8 @@
 	$title = 'Список пользователей';
 	include 'model.php';
 	if ( test_perm('r_users') )
-		if ( empty($_SESSION['users']->limit) )
-			$_SESSION['users'] = new table_settings;
+		if ( empty($_SESSION['set_list']['users']->limit) )
+			$_SESSION['set_list']['users'] = new table_settings;
 	if ( ! empty($_GET) ) {									// изменение страницы отображения списка пользователей
 		if ( test_perm('r_users') ){
 			if ( isset($_GET['del']) )   		            									// удаление юзера
@@ -21,8 +21,8 @@
 			if ( isset($_POST['do_sort']) ) 	  sort_fields( $_POST , 'users' );					// сортировка
 			if ( isset($_POST['do_find']) ) 	  find_fields( $_POST , 'users' );				    // поиск
 			if ( isset($_POST['do_clear_find']) ) find_fields( array() , 'users' );					// сброс поиска
-			if ( empty($_SESSION['users']->find_form[0]) ) $find_form[0] = array('id', '');
-			else $find_form = $_SESSION['users']->find_form;
+			if ( empty($_SESSION['set_list']['users']->find_form[0]) ) $find_form[0] = array('id', '');
+			else $find_form = $_SESSION['set_list']['users']->find_form;
 			$info = list_fields( 'users' );
 		}
 		include 'tpl/head.html';
@@ -38,3 +38,4 @@
 		include 'tpl/footer.html';
 	}
 ?>
+

@@ -3,7 +3,7 @@
 <p></p>
 <div>
 	Список пользователей (<?php echo $info['count'] ?> всего):
-	<?php echo "({$_SESSION['users']->limit} на странице)"?>
+	<?php echo "({$_SESSION['set_list']['users']->limit} на странице)"?>
 </div>
 
 <div class="users table">
@@ -38,7 +38,7 @@
 	<div>
 		<?php		
 			foreach ($arr_limit_users as $limit){
-				if ( $limit != $_SESSION['users']->limit ) echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
+				if ( $limit != $_SESSION['set_list']['users']->limit ) echo "<a href='?lu={$limit}' class='limit'>{$limit}</a>";
 		   		else echo "<a class='limit'>{$limit}</a>";
 			}
 		?>
@@ -46,13 +46,13 @@
 	<form class="sort" action="/userlist.php" method="POST">
 		<p>Сортировка:</p>
 		<select name="sort">
-			<option value="id" <?php if($_SESSION['users']->sort == 'id') echo 'selected'?>>Номер</option>
-			<option value="login" <?php if($_SESSION['users']->sort == 'login') echo 'selected'?>>Имя пользователя</option>
-			<option value="role" <?php if($_SESSION['users']->sort == 'role') echo 'selected'?>>Роль</option>
-			<option value="state" <?php if($_SESSION['users']->sort == 'state') echo 'selected'?>>Состояние</option>
+			<option value="id" <?php if($_SESSION['set_list']['users']->sort == 'id') echo 'selected'?>>Номер</option>
+			<option value="login" <?php if($_SESSION['set_list']['users']->sort == 'login') echo 'selected'?>>Имя пользователя</option>
+			<option value="role" <?php if($_SESSION['set_list']['users']->sort == 'role') echo 'selected'?>>Роль</option>
+			<option value="state" <?php if($_SESSION['set_list']['users']->sort == 'state') echo 'selected'?>>Состояние</option>
 		</select>
 		<p>обратная</p>
-		<input type="checkbox" <?php if($_SESSION['users']->desc == 'on') echo 'checked'?> name="desc">
+		<input type="checkbox" <?php if($_SESSION['set_list']['users']->desc == 'on') echo 'checked'?> name="desc">
 		<p>
 			<button type="submit" name="do_sort">ОК</button>
 		</p>
