@@ -183,12 +183,12 @@ function check_numeric( $num ){		// проверка на целое полож�
 	}
 	return $out;
 }
-function check_like_query( $data , $table_name ){
+function check_like_query( $s , $table_name ){
 	$out = false;
     if ( trim($s) != '' )
 		switch ( $table_name ) {
 			case 'users':
-				if ( preg_match("/\A%?[a-zA-ZА-Яа-яЁё0-9]{1,".LIMIT_QUERY."}%?\z/u", $data) ) $out = true;
+				if ( preg_match("/\A%?[a-zA-ZА-Яа-яЁё0-9]{1,".LIMIT_QUERY."}%?\z/u", $s) ) $out = true;
 				break;
 		}
 	return $out;
