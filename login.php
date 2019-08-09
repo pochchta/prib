@@ -1,20 +1,12 @@
 <?php 
 $title = 'Авторизация';
 include 'model.php';
-$message_class = 'none';
 if ( isset($_POST['do_login']) ){
-	$errors = logging_user($_POST);
-	if ( empty($errors) ){
-		if ( isset($_SESSION['logged_user']) ){
-			$message =  'Вы вошли как '.$_SESSION['logged_user']->login;
-			$message_class = 'ok';
-		}
-	}else {
-		$message = array_shift($errors);
-		$message_class = 'error';
-	}
+	logging_user($_POST);
 }
 include 'tpl/head.html';
+include 'tpl/errors.html';
+include 'tpl/message.html';
 if ( isset($_SESSION['logged_user']) ) {
     include 'tpl/header/user.html';
 } else {

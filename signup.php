@@ -1,20 +1,12 @@
 <?php 
 $title = 'Регистрация';
 include 'model.php';	
-$message_class = 'none';
 if ( isset($_POST['do_signup']) ){
-	$reg_info = registering_user($_POST);
-	if ( $reg_info['ok'] ){
-		$message =  'Регистрация прошла успешно';
-		$message_class = 'ok';
-	}else {
-		if ( ! empty($reg_info['errors']) ){
-			$message = array_shift($reg_info['errors']);
-			$message_class = 'error';
-		}	
-	}		
+	$reg_info = registering_user($_POST);		
 }												
 include 'tpl/head.html';
+include 'tpl/errors.html';
+include 'tpl/message.html';
 if ( isset($_SESSION['logged_user']) ) {
     include 'tpl/header/user.html';
 } else {
