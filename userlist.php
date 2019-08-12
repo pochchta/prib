@@ -15,14 +15,18 @@
 			if ( isset($_GET['lu']) ) limit_fields( $_GET['lu'] , 'users' ); 					// лимит записей на страницу
 			header('Location: /userlist.php');	// для очистки адресной строки
 		}
-	} else {
+	} elseif ( ! empty($_POST) ) {
 		if ( test_perm('r_users') ){
 			if ( isset($_POST['n_page']) )   	  page_fields( $_POST['n_page'] , 'users' ); 		// номер страницы
 			if ( isset($_POST['do_sort']) ) 	  sort_fields( $_POST , 'users' );					// сортировка
 			if ( isset($_POST['do_find']) ) 	  find_fields( $_POST , 'users' );				    // поиск
 			if ( isset($_POST['do_clear_find']) ) find_fields( array() , 'users' );					// сброс поиска
+			header('Location: /userlist.php');  // для очистки $_POST массива
+		}   
+	} else {
+		if ( test_perm('r_users') ) {
 			if ( empty($_SESSION['set_list']['users']->find_form[0]) ) $find_form[0] = array('id', '');
-			else $find_form = $_SESSION['set_list']['users']->find_form;
+			else $find_form = $_SESSION['set_list']['users']->find_form;		
 			$info = list_fields( 'users' );
 		}
 		include 'tpl/head.html';

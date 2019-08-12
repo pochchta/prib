@@ -28,20 +28,23 @@
 		}
 		if ( isset($_POST['do_change_pass']) )
 			if ( ( ($user_info->id == $_SESSION['logged_user']->id) && test_perm('w_self_pass') ) || test_perm('w_user_pass') )
-				change_pass( $_POST , 'users' , $user_info->id );		
+				change_pass( $_POST , 'users' , $user_info->id );
 	}
-	$perm_profile = false;
-	if ( ( ($user_info->id == $_SESSION['logged_user']->id) && test_perm('r_self') ) || test_perm('r_user') )
-		$perm_profile = true;
-	include 'tpl/head.html';
-	include 'tpl/errors.html';
-	include 'tpl/message.html';
-	if ( isset($_SESSION['logged_user']) ) {
-		include 'tpl/header/user.html';
-	} else {
-		include 'tpl/header/guest.html';
+	if ( ! empty($_POST) ) header('Location: /profile.php');  // для очистки $_POST массива	
+	else {
+		$perm_profile = false;
+		if ( ( ($user_info->id == $_SESSION['logged_user']->id) && test_perm('r_self') ) || test_perm('r_user') )
+			$perm_profile = true;
+		include 'tpl/head.html';
+		include 'tpl/errors.html';
+		include 'tpl/message.html';
+		if ( isset($_SESSION['logged_user']) ) {
+			include 'tpl/header/user.html';
+		} else {
+			include 'tpl/header/guest.html';
+		}
+		if ( $perm_profile )
+			include 'tpl/body/profile.html';
+		include 'tpl/footer.html';
 	}
-	if ( $perm_profile )
-		include 'tpl/body/profile.html';
-	include 'tpl/footer.html';
 ?>
