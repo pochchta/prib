@@ -156,3 +156,57 @@ div.tr:last-child .td{
 	margin: 10px 0;
 	padding: 10px;
 }
+
+
+
+/*.table_edit .row:after {
+	content: "";
+	display: table;
+	clear: both;
+}*/
+/*.table_edit .cell:after {
+	content: "";
+	height: 100%;
+}*/
+.table_edit{
+	overflow: hidden;
+	position: relative;
+}
+.table_edit .row{
+	display: -webkit-flex;
+	display: -moz-flex;
+	display: -ms-flex;
+	display: -o-flex;
+	display: flex;
+	border: 1px solid black;
+}
+.table_edit .row:nth-child(n+2){
+	border-top: 0px;
+}
+.table_edit .cell{
+	width: 14%;
+	/*border-left: 1px solid black;*/
+	outline: none;
+}
+.table_edit .cell:last-child{
+	/*border-right: 1px solid black;*/
+	width: 16%;
+}
+.table_edit input[type="date"]{
+	border: none;
+}
+.table_edit input:disabled[type="date"]{
+	background-color: #fff;
+}
+
+.table_edit .cell:nth-child(odd){
+	/*background-color: gray;*/
+}
+.table_edit .row:first-child .cell:nth-child(n+2):before{
+	content: "";
+	width: 1px;
+	height: 100%;
+	background-color: gray;
+	position: absolute;
+	margin-left: -2px;
+}

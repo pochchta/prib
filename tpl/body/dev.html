@@ -1,0 +1,36 @@
+<form action="/dev.php" id="form_dev" method="POST">
+	<input type="hidden" name="name">
+	<input type="hidden" name="type">
+	<input type="hidden" name="number">
+	<div class="table_edit">
+		<div class="row">
+			<div class="cell">Название</div>
+			<div class="cell">Тип</div>
+			<div class="cell">Номер</div>
+			<div class="cell">Дата выпуска</div>
+			<div class="cell">Дата последней правки</div>
+			<div class="cell">Автор последней правки</div>
+			<div class="cell">Статус</div>
+		</div>
+		<div class="row">
+			<div class="cell" contenteditable id="name">АБЦ-41</div>
+			<div class="cell" contenteditable id="type">Миллиамперметр</div>
+			<div class="cell" contenteditable id="number">12301012094320</div>
+			<div class="cell">
+				<input type="date" name="date_release" value="2018-07-22">
+			</div>
+			<div class="cell">
+				<input type="date" value="2018-07-22" disabled>
+			</div>
+			<div class="cell">Иван Иваныч</div>
+			<div class="cell">
+				<select name="state">
+					<option value="on">on</option>
+					<option value="off">off</option>
+				</select>
+			</div>
+		</div>
+	</div>
+	<p></p>
+	<button type="button" onCLick="save_form_dev()">Якнопка</button>
+</form>

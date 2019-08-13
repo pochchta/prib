@@ -70,11 +70,14 @@ function show_popup_post( text, login, form_name ) {
 	popup_no.setAttribute( 'onclick', 'hide_popup()' );
 	popup.setAttribute('style', 'display:block');
 }
-function hide_popup(){
-	document.getElementById('popup').setAttribute('style', 'display:none');
-}
 function send_form( form_name ){		// отправка формы, еще устанавливается name = "do_change_data" для скрытого поля
 	var hidden = document.getElementById("do_change_data");
 	hidden.setAttribute( 'name', 'do_change_data' );
 	document.forms[form_name].submit();
+}
+function save_form_dev(){
+	document.getElementsByName("name")[0].value = document.getElementById("name").innerHTML;
+	document.getElementsByName("type")[0].value = document.getElementById("type").innerHTML;
+	document.getElementsByName("number")[0].value = document.getElementById("number").innerHTML;
+	document.forms["form_dev"].submit();
 }
