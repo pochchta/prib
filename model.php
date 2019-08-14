@@ -444,4 +444,45 @@ function change_data( $data , $table_name , $id ){
 	if ( empty($errors) ) $_SESSION['messages'][] = 'Данные изменены успешно';
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
+function change_dev_data( $data , $table_name , $id = date_release0 ){
+	global $arr_state;
+	$errors = array();
+	$message = 'Данные изменены успешно';
+	$data['name'] = htmlspecialchars( $data['name'] );
+	$data['type'] = htmlspecialchars( $data['type'] );
+	$data['number'] = htmlspecialchars( $data['number'] );
+	if ( strtotime($data['date_release']) == false ) $errors[] = 'Выберите дату из календаря';
+	if ( in_array($data['state'], $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
+
+	if ( empty($errors) ){
+		if ( $id == 0 ) {
+			$item = R::dispense( $table_name );
+			$message = 'Создана новая запись';
+		}
+		else {
+			$item = R::load( $table_name , $id );
+			if ( $item->id == 0 ) $errors[] = 'Запись не найдена';
+		}
+		if ( empty($errors) ) {
+			if ( ($item->name != $data['name']) || ($item->type != $data['type']) || ($item->number != $data['number']) || 
+					($item->date_release != $data['date_release']) || ($item->state != $data['state']) ){
+				$item->name = $data['name'];
+				$item->type = $data['type'];
+				$item->number = $data['number'];
+				$item->date_release = $data['date_release'];
+				$item->state = $data['state'];
+				R::begin();
+				try{
+					R::store($item);
+					R::commit();
+				}catch (Exception $e){
+					R::rollback();
+					$errors[] = 'Нет связи';
+				}
+			} else $errors[] = 'Вы не изменили данные';
+		}
+	}
+	if ( empty($errors) ) $_SESSION['messages'][] = $message;
+	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
+}
 ?>
