@@ -127,6 +127,7 @@ div.tr:last-child .td{
 .popup{
 	border: 1px solid #bbb;
 	position: fixed;
+	z-index: 10;
 	top: 400px;
 	left: 500px;
 	width: 250px;
