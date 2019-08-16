@@ -16,6 +16,7 @@ define("LIMIT_PASSWORD", 60, true);
 define("LIMIT_ROLE", 1, true);
 define("LIMIT_QUERY", 100, true);			// лимит на одно поле поиска
 define("LIMIT_FIELDS", 1999999999, true);	// лимит записей в таблице
+define("LIMIT_DEV_TEXT", 999, true);		// лимит полей в таблице DEV
 $arr_limit_users = array(3,5,10,20);   // массивы констант с php 5.6
 $arr_sort_users = array('id', 'login', 'role', 'state');
 $arr_role = array('A' , 'W' , 'R');
@@ -71,7 +72,16 @@ class table_settings{
 class item_settings{
 	var $id;
 }
-
+class dev_settings{
+	var $id;
+	var $name;
+	var $type;
+	var $number;
+	var $date_release;
+	var $date_last_author;
+	var $date_last_modif;
+	var $state;
+}
 function v( $data ){	// var dump с построчным выводом
 	echo'<pre>',var_dump($data),'</pre>';
 }
@@ -192,6 +202,11 @@ function check_like_query( $s , $table_name ){
 				break;
 		}
 	return $out;
+}
+function check_date( $s ) {		// проверка на формат yyyy-mm-dd
+    $out = false;
+    if  ( preg_match( "/\A[0-9]{4}-[0-9]{2}-[0-9]{2}\z/", $s ) ) $out = true;
+    return $out;
 }
 function del_fields( $id , $table_name ){
 	$errors = array();
@@ -444,20 +459,34 @@ function change_data( $data , $table_name , $id ){
 	if ( empty($errors) ) $_SESSION['messages'][] = 'Данные изменены успешно';
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
-function change_dev_data( $data , $table_name , $id = date_release0 ){
+function change_dev_data( $data , $table_name , $id = 0 ){
 	global $arr_state;
+	$double_item_exists = false;			// найдены ли дубликаты с таким же номером
 	$errors = array();
 	$message = 'Данные изменены успешно';
 	$data['name'] = htmlspecialchars( $data['name'] );
 	$data['type'] = htmlspecialchars( $data['type'] );
-	$data['number'] = htmlspecialchars( $data['number'] );
-	if ( strtotime($data['date_release']) == false ) $errors[] = 'Выберите дату из календаря';
+	$data['number'] = htmlspecialchars( $data['number'] );	
+	if ( mb_strlen($data['name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
+	if ( mb_strlen($data['type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	if ( mb_strlen($data['number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	if ( (strtotime($data['date_release']) && check_date($data['date_release'])) == false ) $errors[] = 'Выберите дату из календаря';
 	if ( in_array($data['state'], $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
 
 	if ( empty($errors) ){
 		if ( $id == 0 ) {
-			$item = R::dispense( $table_name );
-			$message = 'Создана новая запись';
+			$double = R::findOne( $table_name , 'number = ?' , array($data['number']));
+			if ( ($double->name == $data['name']) && ($double->type == $data['type']) && ($double->number == $data['number']) && 
+					($double->date_release == $data['date_release']) ){
+				$errors[] = 'Этот прибор уже внесен';
+			} elseif ( $double->id  && isset($data['ignore_double']) == false ){
+				$double_item_exists = true;
+				$errors[] = 'Приборы с таким номером уже существуют';
+			}
+			if ( empty($errors) ) {
+				$item = R::dispense( $table_name );
+				$message = 'Создана новая запись';
+			}
 		}
 		else {
 			$item = R::load( $table_name , $id );
@@ -484,5 +513,6 @@ function change_dev_data( $data , $table_name , $id = date_release0 ){
 	}
 	if ( empty($errors) ) $_SESSION['messages'][] = $message;
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
+	return $double_item_exists;
 }
 ?>

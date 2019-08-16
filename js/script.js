@@ -58,7 +58,6 @@ function user_id( id ) {
 		document.forms['hidden_form'].submit();
 	}
 }
-
 function show_popup_post( text, login, form_name ) {
 	var popup = document.getElementById("popup");
 	var popup_text = document.getElementById("popup_text");
@@ -66,20 +65,24 @@ function show_popup_post( text, login, form_name ) {
 	var popup_yes = document.getElementById("popup_yes");
 	popup_text.innerHTML = text;
 	popup_login.innerHTML = login + "?";
-	popup_yes.setAttribute( 'onclick', 'send_form("'+form_name+'")' );
+	popup_yes.setAttribute( 'onclick', 'send_form("'+form_name+'","do_change_data")' );
 	popup_no.setAttribute( 'onclick', 'hide_popup()' );
 	popup.setAttribute('style', 'display:block');
 }
-function send_form( form_name ){		// отправка формы, еще устанавливается name = "do_change_data" для скрытого поля
-	var hidden = document.getElementById("do_change_data");
-	hidden.setAttribute( 'name', 'do_change_data' );
+function send_form( form_name , field_name ){		// отправка формы, еще устанавливается name = id для поля подтверждения
+	var arr = [];
+	arr = arr.concat(field_name);
+	arr.forEach(function(item, i, arr) {
+		var hidden = document.getElementById(item);
+		hidden.setAttribute( 'name', item );
+	});
 	document.forms[form_name].submit();
 }
 function save_form_dev(){
 	document.getElementsByName("name")[0].value = delete_tags(document.getElementById("name").innerHTML);
 	document.getElementsByName("type")[0].value = delete_tags(document.getElementById("type").innerHTML);
 	document.getElementsByName("number")[0].value = delete_tags(document.getElementById("number").innerHTML);
-	document.forms["form_dev"].submit();
+	send_form("form_dev", "do_change_data");
 }
 function delete_tags( str ){		// удалить теги div,br из строки
 	str = str.replace(/<div>/gi," ");
@@ -87,4 +90,18 @@ function delete_tags( str ){		// удалить теги div,br из строк�
 	str = str.replace(/<\/?br>/gi," ");
 	str = str.replace(/ +/g," ");
 	return str.trim();
+}
+function ack_double_number( text, login, form_name ){
+	document.getElementsByName("name")[0].value = delete_tags(document.getElementById("name").innerHTML);
+	document.getElementsByName("type")[0].value = delete_tags(document.getElementById("type").innerHTML);
+	document.getElementsByName("number")[0].value = delete_tags(document.getElementById("number").innerHTML);	
+	var popup = document.getElementById("popup");
+	var popup_text = document.getElementById("popup_text");
+	var popup_login = document.getElementById("popup_login");
+	var popup_yes = document.getElementById("popup_yes");
+	popup_text.innerHTML = text;
+	popup_login.innerHTML = login + "?";
+	popup_yes.setAttribute( 'onclick', 'send_form("'+form_name+'",["do_change_data","ignore_double"])' );
+	popup_no.setAttribute( 'onclick', 'hide_popup()' );
+	popup.setAttribute('style', 'display:block');
 }
