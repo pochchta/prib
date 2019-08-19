@@ -3,13 +3,21 @@
 		echo '<div class="messages" id="messages">';
 		echo 'Сообщение: '.array_shift($_SESSION['messages']);
 		echo '</div>';
+		$json = json_encode( $_SESSION['messages'] );
 		$_SESSION['messages'] = array();
 ?>
 <script>
+	var arr_mes = <?php echo $json ?>;
 	messages.onclick = function() {
-		document.getElementById('messages').setAttribute('style', 'display:none');
-	};
+		var div_mes = document.getElementById('messages');
+		if ( arr_mes.length ){
+			div_mes.innerHTML ='Сообщение: ' + arr_mes.shift();
+		} else {
+			div_mes.setAttribute('style', 'display:none');
+		}
+	};	
 </script>
-<?php 
-	endif 
+
+<?php
+	endif
 ?>

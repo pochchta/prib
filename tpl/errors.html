@@ -3,13 +3,20 @@
 		echo '<div class="errors" id="errors">';
 		echo 'Ошибка: '.array_shift($_SESSION['errors']);
 		echo '</div>';
+		$json = json_encode( $_SESSION['errors'] );
 		$_SESSION['errors'] = array();
 ?>
-		<script>
-			errors.onclick = function() {
-				document.getElementById('errors').setAttribute('style', 'display:none');
-			};
-		</script>
-<?php 
-	endif 
+<script>
+	var arr_err = <?php echo $json ?>;
+	errors.onclick = function() {
+		var div_err = document.getElementById('errors');
+		if ( arr_err.length ){
+			div_err.innerHTML ='Ошибка: ' + arr_err.shift();
+		} else {
+			div_err.setAttribute('style', 'display:none');
+		}
+	};
+</script>
+<?php
+	endif
 ?>
