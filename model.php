@@ -78,7 +78,7 @@ class dev_settings{
 	var $type;
 	var $number;
 	var $date_release;
-	var $date_last_author;
+	var $last_author;
 	var $date_last_modif;
 	var $state;
 }
@@ -402,7 +402,9 @@ function one_item( $id , $table_name ){
 		$item = R::load( $table_name , $id );
 		if ( $item->id ) {
 			$out = $item;
-			$out->password = '';
+			if ( $out->password ) $out->password = '';
+		} else{
+			// $_SESSION['errors'][] = 'Запись не найдена';
 		}
 	}
 	return $out;
@@ -466,27 +468,33 @@ function change_dev_data( $data , $table_name , $id = 0 ){
 	$message = 'Данные изменены успешно';
 	$data['name'] = htmlspecialchars( $data['name'] );
 	$data['type'] = htmlspecialchars( $data['type'] );
-	$data['number'] = htmlspecialchars( $data['number'] );	
+	$data['number'] = htmlspecialchars( $data['number'] );
+	if ( $data['number'] == '' ) $errors[] = 'Номер - обязательное поле';
 	if ( mb_strlen($data['name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
 	if ( mb_strlen($data['type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
 	if ( mb_strlen($data['number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
-	if ( (strtotime($data['date_release']) && check_date($data['date_release'])) == false ) $errors[] = 'Выберите дату из календаря';
+	if ( $data['date_release'] != '' ){
+		if ( (strtotime($data['date_release']) && check_date($data['date_release'])) == false )
+			$errors[] = 'Выберите дату из календаря';
+	}else {
+		$data['date_release'] = "1900-01-01";
+	}
 	if ( in_array($data['state'], $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
+
+	$count_double = R::count( $table_name , 'id <> ? AND name = ? AND type = ? AND number = ? AND date_release = ?' , 
+		array( $id , $data['name'] , $data['type'] , $data['number'] , $data['date_release']) );
+	$count_double_number = R::count( $table_name , 'id <> ? AND number = ?' , array($id , $data['number']) );
+	if ( $count_double ){
+		$errors[] = 'Этот прибор уже внесен';
+	} elseif ( $count_double_number && ($data['ignore_double'] !== $data['number'] ) ){
+		$double_item_exists = true;
+		$errors[] = 'Приборы с таким номером уже существуют';
+	}
 
 	if ( empty($errors) ){
 		if ( $id == 0 ) {
-			$double = R::findOne( $table_name , 'number = ?' , array($data['number']));
-			if ( ($double->name == $data['name']) && ($double->type == $data['type']) && ($double->number == $data['number']) && 
-					($double->date_release == $data['date_release']) ){
-				$errors[] = 'Этот прибор уже внесен';
-			} elseif ( $double->id  && isset($data['ignore_double']) == false ){
-				$double_item_exists = true;
-				$errors[] = 'Приборы с таким номером уже существуют';
-			}
-			if ( empty($errors) ) {
-				$item = R::dispense( $table_name );
-				$message = 'Создана новая запись';
-			}
+			$item = R::dispense( $table_name );
+			$message = 'Создана новая запись';
 		}
 		else {
 			$item = R::load( $table_name , $id );

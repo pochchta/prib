@@ -1,9 +1,20 @@
 <?php 
-	$title = 'Создание и редактирование записи о приборе';
+	$title = 'Редактирование записи о приборе';
 	include 'model.php';
+	if ( ! isset($_SESSION['set_item']['dev']->id) ) {
+		$_SESSION['set_item']['dev'] = new item_settings;
+		$settings = &$_SESSION['set_item']['dev'];
+		$settings->id = 0;		
+	}
+	if ( $settings->id == 0 )	{
+		$title = 'Создание записи о приборе';
+	} else {
+		$item = one_item( $settings->id , 'devs');
+	}
 	$double_item_exists = false;
 	if ( isset($_POST['do_change_data']) ){
 		$double_item_exists = change_dev_data($_POST, 'devs');
+		$item = $_POST;
 	}
 	include 'tpl/head.html';
 	include 'tpl/errors.html';	v($_POST);

@@ -70,7 +70,7 @@ function show_popup_post( text, login, form_name ) {
 	popup.setAttribute('style', 'display:block');
 }
 function send_form( form_name , field_name ){		// отправка формы, еще устанавливается name = id для поля подтверждения
-	var arr = [];
+	var arr = [];									// field_name - строка или массив строк
 	arr = arr.concat(field_name);
 	arr.forEach(function(item, i, arr) {
 		var hidden = document.getElementById(item);

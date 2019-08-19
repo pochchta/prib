@@ -211,5 +211,5 @@ div.tr:last-child .td{
 	height: 100%;
 	background-color: gray;
 	position: absolute;
-	margin-left: -2px;
+	margin-left: -1px;
 }

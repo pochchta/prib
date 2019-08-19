@@ -1,6 +1,6 @@
 <form action="/dev.php" id="form_dev" method="POST">
 	<input type="hidden" id="do_change_data">
-	<input type="hidden" id="ignore_double">
+	<input type="hidden" id="ignore_double" value="<?php if($double_item_exists) echo $item['number']; else echo 'false' ?>">
 	<input type="hidden" name="name">
 	<input type="hidden" name="type">
 	<input type="hidden" name="number">
@@ -10,31 +10,37 @@
 			<div class="cell">Тип</div>
 			<div class="cell">Номер</div>
 			<div class="cell">Дата выпуска</div>
+			<div class="cell">Статус</div>			
 			<div class="cell">Дата последней правки</div>
 			<div class="cell">Автор последней правки</div>
-			<div class="cell">Статус</div>
 		</div>
 		<div class="row">
-			<div class="cell" contenteditable id="name"><?php if( isset($_POST['name']) ) echo $_POST['name'] ?></div>
-			<div class="cell" contenteditable id="type"><?php if( isset($_POST['type']) ) echo $_POST['type'] ?></div>
-			<div class="cell" contenteditable id="number"><?php if( isset($_POST['number']) ) echo $_POST['number'] ?></div>
+			<div class="cell" contenteditable id="name"><?php if( isset($item['name']) ) echo $item['name'] ?></div>
+			<div class="cell" contenteditable id="type"><?php if( isset($item['type']) ) echo $item['type'] ?></div>
+			<div class="cell" contenteditable id="number"><?php if( isset($item['number']) ) echo $item['number'] ?></div>
 			<div class="cell">
-				<input type="date" name="date_release" value="<?php if( isset($_POST['date_release']) ) echo $_POST['date_release'] ?>">
+				<input type="date" name="date_release" value="<?php if( isset($item['date_release']) ) echo $item['date_release'] ?>">
 			</div>
+			<div class="cell">
+				<select name="state">
+					<option value="on" <?php if( $item['state'] == "on") echo "selected" ?>>on</option>
+					<option value="off" <?php if( $item['state'] == "off") echo "selected" ?>>off</option>
+				</select>
+			</div>			
 			<div class="cell">
 				<input type="date" value="2018-07-22" disabled>
 			</div>
 			<div class="cell">Иван Иваныч</div>
-			<div class="cell">
-				<select name="state">
-					<option value="on" <?php if( $_POST['state'] == "on") echo "selected" ?>>on</option>
-					<option value="off" <?php if( $_POST['state'] == "off") echo "selected" ?>>off</option>
-				</select>
-			</div>
 		</div>
 	</div>
 	<p></p>
-	<button type="button" onCLick="save_form_dev()">Якнопка</button>
+	<button type="button" onCLick="save_form_dev()">
+		<?php if ($settings) echo 'Сохранить'; else echo 'Создать'; ?>
+	</button>
+	<button type="reset">
+	<!-- <button type="reset" onCLick="clear_form_dev()"> -->
+		Очистить
+	</button>
 	<?php if ($double_item_exists) 
 		echo "<script>ack_double_number('Прибор с таким номером уже существует','Все равно создать','form_dev')</script>";	
 	?>
