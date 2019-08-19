@@ -84,6 +84,16 @@ function save_form_dev(){
 	document.getElementsByName("number")[0].value = delete_tags(document.getElementById("number").innerHTML);
 	send_form("form_dev", "do_change_data");
 }
+function clear_form_dev(){
+	document.getElementsByName("name")[0].value = "";
+	document.getElementsByName("type")[0].value = "";
+	document.getElementsByName("number")[0].value = "";
+	document.getElementsByName("date_release")[0].value = "";
+	document.getElementsByName("state")[0].selectedIndex = 0;
+	document.getElementById("name").innerHTML = "";
+	document.getElementById("type").innerHTML = "";
+	document.getElementById("number").innerHTML = "";
+}
 function delete_tags( str ){		// удалить теги div,br из строки
 	str = str.replace(/<div>/gi," ");
 	str = str.replace(/<\/div>/gi," ");
