@@ -213,3 +213,10 @@ div.tr:last-child .td{
 	position: absolute;
 	margin-left: -1px;
 }
+#form_dev_checkbox{
+	display: inline;
+	margin-left: 15px;
+}
+#form_dev_checkbox input{
+
+}

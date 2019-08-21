@@ -69,9 +69,9 @@ function show_popup_post( text, login, form_name ) {
 	popup_no.setAttribute( 'onclick', 'hide_popup()' );
 	popup.setAttribute('style', 'display:block');
 }
-function send_form( form_name , field_name ){		// отправка формы, еще устанавливается name = id для поля подтверждения
-	var arr = [];									// field_name - строка или массив строк
-	arr = arr.concat(field_name);
+function send_form( form_name , field_name ){		// отправка формы ( id , id )
+	var arr = [];									// еще устанавливается name = id для поля подтверждения
+	arr = arr.concat(field_name);					// field_name - строка или массив строк
 	arr.forEach(function(item, i, arr) {
 		var hidden = document.getElementById(item);
 		hidden.setAttribute( 'name', item );
@@ -94,10 +94,14 @@ function clear_form_dev(){
 	document.getElementById("type").innerHTML = "";
 	document.getElementById("number").innerHTML = "";
 }
-function delete_tags( str ){		// удалить теги div,br из строки
+function delete_tags( str ){		// удаление тегов div,br и замена (&nbsp;) и (<>&)
 	str = str.replace(/<div>/gi," ");
 	str = str.replace(/<\/div>/gi," ");
 	str = str.replace(/<\/?br>/gi," ");
+	str = str.replace(/&nbsp;/g," ");
+	str = str.replace(/&amp;/g,"&");
+	str = str.replace(/&lt;/g,"<");
+	str = str.replace(/&gt;/g,">");
 	str = str.replace(/ +/g," ");
 	return str.trim();
 }

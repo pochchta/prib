@@ -71,17 +71,22 @@ class table_settings{
 }
 class item_settings{
 	var $id;
+	var $test_double;
+	function item_settings(){
+		$this->id = 0;
+		$this->test_double = true;
+	}
 }
-class dev_settings{
-	var $id;
-	var $name;
-	var $type;
-	var $number;
-	var $date_release;
-	var $last_author;
-	var $date_last_modif;
-	var $state;
-}
+// class dev_settings{
+// 	var $id;
+// 	var $name;
+// 	var $type;
+// 	var $number;
+// 	var $date_release;
+// 	var $last_author;
+// 	var $date_last_modif;
+// 	var $state;
+// }
 function v( $data ){	// var dump с построчным выводом
 	echo'<pre>',var_dump($data),'</pre>';
 }
@@ -461,7 +466,7 @@ function change_data( $data , $table_name , $id ){
 	if ( empty($errors) ) $_SESSION['messages'][] = 'Данные изменены успешно';
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 }
-function change_dev_data( $data , $table_name , $id = 0 ){
+function change_dev_data( $data , $table_name , $id , $test_double ){
 	global $arr_state;
 	$double_item_exists = false;			// найдены ли дубликаты с таким же номером
 	$errors = array();
@@ -477,18 +482,19 @@ function change_dev_data( $data , $table_name , $id = 0 ){
 		if ( (strtotime($data['date_release']) && check_date($data['date_release'])) == false )
 			$errors[] = 'Выберите дату из календаря';
 	}else {
-		$data['date_release'] = "1900-01-01";
+		$data['date_release'] = "1902-01-01"; //Корректным диапазоном временных меток обычно являются даты с 13 декабря 1901 20:45:54 UTC по 19 января 2038 03:14:07 UTC. (Эти даты соответствуют минимальному и максимальному значению 32-битового знакового целого). ( Функция strtotime() выдаст ошибку при выходе за диапазон )
 	}
 	if ( in_array($data['state'], $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
 
 	$count_double = R::count( $table_name , 'id <> ? AND name = ? AND type = ? AND number = ? AND date_release = ?' , 
 		array( $id , $data['name'] , $data['type'] , $data['number'] , $data['date_release']) );
+	v($data);
 	$count_double_number = R::count( $table_name , 'id <> ? AND number = ?' , array($id , $data['number']) );
 	if ( $count_double ){
 		$errors[] = 'Этот прибор уже внесен';
-	} elseif ( $count_double_number && ($data['ignore_double'] !== $data['number'] ) ){
+	} elseif ( $count_double_number && ($data['ignore_double'] !== $data['number']) && $test_double ){
 		$double_item_exists = true;
-		$errors[] = 'Приборы с таким номером уже существуют';
+		$errors[] = 'Прибор с таким номером уже существует';
 	}
 
 	if ( empty($errors) ){
@@ -508,6 +514,8 @@ function change_dev_data( $data , $table_name , $id = 0 ){
 				$item->number = $data['number'];
 				$item->date_release = $data['date_release'];
 				$item->state = $data['state'];
+				$item->last_date = date("Y-m-d");
+				$item->last_author = $_SESSION['logged_user']->login;
 				R::begin();
 				try{
 					R::store($item);
@@ -519,8 +527,15 @@ function change_dev_data( $data , $table_name , $id = 0 ){
 			} else $errors[] = 'Вы не изменили данные';
 		}
 	}
-	if ( empty($errors) ) $_SESSION['messages'][] = $message;
+	if ( empty($errors) ) {
+		$_SESSION['messages'][] = $message;
+		$out = $item;
+	}else{
+		unset($data['do_change_data'] , $data['ignore_double']);
+		$out = R::convertToBean('devs', $data);
+	}
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
-	return $double_item_exists;
+
+	return array( 'changed' => ! empty($errors) , 'double_item_exists' => $double_item_exists , 'item' => $out);
 }
 ?>

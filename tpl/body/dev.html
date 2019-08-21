@@ -1,6 +1,19 @@
+<a <?php if( $settings->id ) echo "href='?p={$settings->id}'" ?>>Обновить</a>
+<a href="?p=0">Новая запись</a>
+<a href="\devlist.php">Список записей</a>
+<form action="/dev.php" id="form_dev_checkbox" method="POST">
+	<input type="checkbox" id="checkbox_test_double" name="checkbox" value="test" 
+		onClick="send_form('form_dev_checkbox' , 'change_test_double')"
+		<?php if( $settings->test_double ) echo "checked" ?>
+	>
+	<label for="checkbox_test_double">Проверка дублирования номеров</label>
+	<input type="hidden" id="change_test_double">
+</form>
+
+<?php if ( $item_exists ) : ?>
 <form action="/dev.php" id="form_dev" method="POST">
 	<input type="hidden" id="do_change_data">
-	<input type="hidden" id="ignore_double" value="<?php if($double_item_exists) echo $item['number']; else echo 'false' ?>">
+	<input type="hidden" id="ignore_double" value="<?php if($double_item_exists) echo $item->number; else echo 'false' ?>">
 	<input type="hidden" name="name">
 	<input type="hidden" name="type">
 	<input type="hidden" name="number">
@@ -10,37 +23,42 @@
 			<div class="cell">Тип</div>
 			<div class="cell">Номер</div>
 			<div class="cell">Дата выпуска</div>
-			<div class="cell">Статус</div>			
+			<div class="cell">Статус</div>
 			<div class="cell">Дата последней правки</div>
 			<div class="cell">Автор последней правки</div>
 		</div>
 		<div class="row">
-			<div class="cell" contenteditable id="name"><?php if( isset($item['name']) ) echo $item['name'] ?></div>
-			<div class="cell" contenteditable id="type"><?php if( isset($item['type']) ) echo $item['type'] ?></div>
-			<div class="cell" contenteditable id="number"><?php if( isset($item['number']) ) echo $item['number'] ?></div>
+			<div class="cell" contenteditable id="name"><?php if( isset($item->name) ) echo $item->name ?></div>
+			<div class="cell" contenteditable id="type"><?php if( isset($item->type) ) echo $item->type ?></div>
+			<div class="cell" contenteditable id="number"><?php if( isset($item->number) ) echo $item->number ?></div>
 			<div class="cell">
-				<input type="date" name="date_release" value="<?php if( isset($item['date_release']) ) echo $item['date_release'] ?>">
+				<input type="date" name="date_release" <?php if(isset($item['date_release'])) echo "value={$item['date_release']}"?>>
 			</div>
 			<div class="cell">
 				<select name="state">
-					<option value="on" <?php if( $item['state'] == "on") echo "selected" ?>>on</option>
-					<option value="off" <?php if( $item['state'] == "off") echo "selected" ?>>off</option>
+					<option value="on" <?php if( $item->state == "on") echo "selected" ?>>on</option>
+					<option value="off" <?php if( $item->state == "off") echo "selected" ?>>off</option>
 				</select>
 			</div>			
 			<div class="cell">
-				<input type="date" value="2018-07-22" disabled>
+				<input type="date" value="<?php if( isset($item['last_date']) ) echo $item['last_date'] ?>" disabled>
 			</div>
-			<div class="cell">Иван Иваныч</div>
+			<div class="cell"><?php if( isset($item['last_author']) ) echo $item['last_author'] ?></div>
 		</div>
 	</div>
 	<p></p>
 	<button type="button" onCLick="save_form_dev()">
-		<?php if ($settings) echo 'Сохранить'; else echo 'Создать'; ?>
+		<?php if ($settings->id) echo 'Сохранить'; else echo 'Создать'; ?>
 	</button>
 	<button type="button" onCLick="clear_form_dev()">
 		Очистить
 	</button>
-	<?php if ($double_item_exists) 
-		echo "<script>ack_double_number('Прибор с таким номером уже существует','Все равно создать','form_dev')</script>";	
+	<?php if ($double_item_exists){
+		$text = "создать";
+		if ($settings->id) $text = "сохранить";
+		echo "<script>ack_double_number('Прибор с таким номером уже существует','Все равно {$text}','form_dev')</script>";	
+	}
 	?>
 </form>
+form
+<?php endif ?>
