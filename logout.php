@@ -6,5 +6,7 @@
 	unset($_SESSION['set_list']);
 	unset($_SESSION['errors']);
 	unset($_SESSION['messages']);
+	unset($_SESSION['POST']);
+	unset($_SESSION['GET']);
 	header('Location: /');
 ?>

@@ -488,7 +488,6 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 
 	$count_double = R::count( $table_name , 'id <> ? AND name = ? AND type = ? AND number = ? AND date_release = ?' , 
 		array( $id , $data['name'] , $data['type'] , $data['number'] , $data['date_release']) );
-	v($data);
 	$count_double_number = R::count( $table_name , 'id <> ? AND number = ?' , array($id , $data['number']) );
 	if ( $count_double ){
 		$errors[] = 'Этот прибор уже внесен';
