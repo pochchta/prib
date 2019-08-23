@@ -119,3 +119,60 @@ function ack_double_number( text, login, form_name ){
 	popup_no.setAttribute( 'onclick', 'hide_popup()' );
 	popup.setAttribute('style', 'display:block');
 }
+function elem_copy_clear( elem_id ){		// копирование и вставка после текущего с очисткой (value,innerHTML);
+	let regexp = /([a-zA-Z_]+)([0-9]*)/;	// инкремент: parent id++;	child name++
+	let elem = document.getElementById( elem_id );		
+	let parent = elem.parentElement;
+	let copy;
+	let last_elem;
+
+	for (let i = 0; i < parent.childNodes.length; i++) {     // поиск последнего id + "n"
+		if ( parent.childNodes[i].nodeName!="#text" && parent.childNodes[i].hasAttribute('id') ){
+			if ( parent.childNodes[i].id.match(elem_id) ){
+				elem = parent.childNodes[i];
+				if ( i < parent.childNodes.length - 1 ) last_elem = parent.childNodes[i+1];
+				else last_elem = 0;
+			}
+		}
+	}
+	copy = elem.cloneNode(true);
+	if ( copy.hasAttribute('id') ){						    // инкремент id (элемента copy)
+		let matches = copy.id.match( regexp );
+		copy.id = matches[1] + (matches[2]?++matches[2]:'1');
+	}
+	for (let i = 0; i < copy.childNodes.length; i++) {		// инкремент id, name (childs copy)
+		if ( copy.childNodes[i].nodeName!="#text" ){
+			let i_child = copy.childNodes[i];
+			if  ( i_child.hasAttribute('id') ){
+				let matches = i_child.id.match( regexp );
+				i_child.setAttribute( 'id' , matches[1] + (matches[2]?++matches[2]:'1') );
+			}
+			if  ( i_child.hasAttribute('name') ){
+				let matches = i_child.getAttribute( 'name').match( regexp );			
+				i_child.setAttribute( 'name' , matches[1] + (matches[2]?++matches[2]:'1') );
+			}
+			if ( i_child.nodeName == "input" ) i_child.value = '';
+			else if ( i_child.nodeName == "select" ) i_child.selectedIndex = 0;
+			else if ( i_child.hasChildNodes() == false ) i_child.textContent = '';
+			if ( i_child.nodeName == "DIV" ){
+				for (let j = 0; j < i_child.childNodes.length; j++) {
+					if ( i_child.childNodes[j].nodeName!="#text" ){
+						if  ( i_child.childNodes[j].hasAttribute('id') ){
+							let matches = i_child.childNodes[j].id.match( regexp );
+							i_child.childNodes[j].setAttribute( 'id' , matches[1] + (matches[2]?++matches[2]:'1') );
+						}
+						if  ( i_child.childNodes[j].hasAttribute('name') ){
+							let matches = i_child.childNodes[j].getAttribute( 'name').match( regexp );			
+							i_child.childNodes[j].setAttribute( 'name' , matches[1] + (matches[2]?++matches[2]:'1') );
+						}		
+						if ( i_child.childNodes[j].nodeName == "input" ) i_child.childNodes[j].value = '';
+						else if ( i_child.childNodes[j].nodeName == "select" ) i_child.childNodes[j].selectedIndex = 0;
+						else if ( i_child.childNodes[j].hasChildNodes() == false ) i_child.childNodes[j].textContent = '';
+					}
+				}
+			}
+		} 
+	}
+	if ( last_elem ) parent.insertBefore(copy, last_elem);
+	else parent.appendChild(copy);
+}
