@@ -47,6 +47,12 @@ $arr_perm = array(				// разрешения
 	'r_self' =>  array ('A', 'W', 'R')
 
 );
+$arr_repair_fields = array(			// поля для редактирования пользователем
+	'name',
+	'type',
+	'date_release',
+	'state'
+);
 //QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 
 class table_settings{
@@ -491,7 +497,7 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	$count_double_number = R::count( $table_name , 'id <> ? AND number = ?' , array($id , $data['number']) );
 	if ( $count_double ){
 		$errors[] = 'Этот прибор уже внесен';
-	} elseif ( $count_double_number && ($data['ignore_double'] !== $data['number']) && $test_double ){
+	} elseif ( $count_double_number && ($data['do_ignore_double'] !== $data['number']) && $test_double ){
 		$double_item_exists = true;
 		$errors[] = 'Прибор с таким номером уже существует';
 	}
@@ -530,11 +536,43 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 		$_SESSION['messages'][] = $message;
 		$out = $item;
 	}else{
-		unset($data['do_change_data'] , $data['ignore_double']);
+		unset($data['do_change_data'] , $data['do_ignore_double']);
 		$out = R::convertToBean('devs', $data);
 	}
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 
 	return array( 'changed' => ! empty($errors) , 'double_item_exists' => $double_item_exists , 'item' => $out);
+}
+function dev_data_to_obj( $data ){
+	global $arr_repair_fields;
+	$errors = array();
+	$dev = R::dispese('devs');
+	$matches;
+	$repair;
+	$r_n = -1;
+	foreach ($data as $key => $value){
+		if ( preg_match("/\Ado_/", $key) ){					// управляющие элементы
+
+		} elseif ( preg_match("/\Am_(\w+)\z/", $key, $matches) ){			// строка основной таблицы
+
+		} elseif ( preg_match("/\Ar_([a-zA-Z_]+)([0-9]*)\z/", $key, $matches) ){			// строка таблицы ремонтов
+			if ( isset($matches[2]) == false ) $matches[2] = 0;
+			if ( $matches[2] != $r_n || isset($repair) == false ){
+				if ( isset($repair) ) $dev->xownRepaList[] = $enter;
+				$r_n = $matches[2];
+				$repair = R::dispense('repairs');
+			}
+			if ( in_array($matches[1], $arr_repair_fields) ) {
+				$value = htmlspecialchars($value);
+				if ( $value > LIMIT_DEV_TEXT ) $errors[] = 'Текст в таблицах должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+				else $repair->$matches[1] = $value;
+			}
+		} elseif ( preg_match("/\Ap_(\w+)\z/", $key, $matches) ){			// строка таблицы поверок
+
+		}else{												// другое
+
+		}
+	}
+
 }
 ?>
