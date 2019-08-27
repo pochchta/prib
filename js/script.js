@@ -115,20 +115,19 @@ function ack_double_number( text, login, form_name ){
 	var popup_yes = document.getElementById("popup_yes");
 	popup_text.innerHTML = text;
 	popup_login.innerHTML = login + "?";
-	popup_yes.setAttribute( 'onclick', 'send_form("'+form_name+'",["do_change_data","ignore_double"])' );
+	popup_yes.setAttribute( 'onclick', 'send_form("'+form_name+'",["do_change_data","do_ignore_double"])' );
 	popup_no.setAttribute( 'onclick', 'hide_popup()' );
 	popup.setAttribute('style', 'display:block');
 }
-function elem_copy_clear( elem_id ){		// копирование и вставка после текущего с очисткой (value,innerHTML);
-	let regexp = /([a-zA-Z_]+)([0-9]*)/;	// инкремент: parent id++;	child name++
-	let elem = document.getElementById( elem_id );		
+function elem_copy_clear( elem_id ){				// поиск последнего elem_id[0-9]*, копирование и вставка после него
+	let regexp = /([a-zA-Z_]+)([0-9]*)/;			// независимый инкремент: parent id++;	child id++, name++
+	let elem = document.getElementById( elem_id );	// очистка (child, child.child) у кого есть id; сброс value, select
 	let parent = elem.parentElement;
 	let copy;
 	let last_elem;
-
 	for (let i = 0; i < parent.childNodes.length; i++) {     // поиск последнего id + "n"
-		if ( parent.childNodes[i].nodeName!="#text" && parent.childNodes[i].hasAttribute('id') ){
-			if ( parent.childNodes[i].id.match(elem_id) ){
+		if ( parent.childNodes[i].nodeName=="DIV" && parent.childNodes[i].hasAttribute('id') ){
+			if ( parent.childNodes[i].id.match(elem_id).length ){
 				elem = parent.childNodes[i];
 				if ( i < parent.childNodes.length - 1 ) last_elem = parent.childNodes[i+1];
 				else last_elem = 0;
@@ -141,7 +140,7 @@ function elem_copy_clear( elem_id ){		// копирование и вставк�
 		copy.id = matches[1] + (matches[2]?++matches[2]:'1');
 	}
 	for (let i = 0; i < copy.childNodes.length; i++) {		// инкремент id, name (childs copy)
-		if ( copy.childNodes[i].nodeName!="#text" ){
+		if ( copy.childNodes[i].nodeName!="#text" && copy.childNodes[i].nodeName!="#comment" ){
 			let i_child = copy.childNodes[i];
 			if  ( i_child.hasAttribute('id') ){
 				let matches = i_child.id.match( regexp );
@@ -151,12 +150,12 @@ function elem_copy_clear( elem_id ){		// копирование и вставк�
 				let matches = i_child.getAttribute( 'name').match( regexp );			
 				i_child.setAttribute( 'name' , matches[1] + (matches[2]?++matches[2]:'1') );
 			}
-			if ( i_child.nodeName == "input" ) i_child.value = '';
-			else if ( i_child.nodeName == "select" ) i_child.selectedIndex = 0;
-			else if ( i_child.hasChildNodes() == false ) i_child.textContent = '';
+			if ( i_child.nodeName == "INPUT" ) i_child.value = '';
+			else if ( i_child.nodeName == "SELECT" ) i_child.selectedIndex = 0;
+			else if ( i_child.id ) i_child.innerHTML = '';
 			if ( i_child.nodeName == "DIV" ){
 				for (let j = 0; j < i_child.childNodes.length; j++) {
-					if ( i_child.childNodes[j].nodeName!="#text" ){
+					if ( i_child.childNodes[j].nodeName!="#text" && i_child.childNodes[j].nodeName!="#comment" ){
 						if  ( i_child.childNodes[j].hasAttribute('id') ){
 							let matches = i_child.childNodes[j].id.match( regexp );
 							i_child.childNodes[j].setAttribute( 'id' , matches[1] + (matches[2]?++matches[2]:'1') );
@@ -165,9 +164,9 @@ function elem_copy_clear( elem_id ){		// копирование и вставк�
 							let matches = i_child.childNodes[j].getAttribute( 'name').match( regexp );			
 							i_child.childNodes[j].setAttribute( 'name' , matches[1] + (matches[2]?++matches[2]:'1') );
 						}		
-						if ( i_child.childNodes[j].nodeName == "input" ) i_child.childNodes[j].value = '';
-						else if ( i_child.childNodes[j].nodeName == "select" ) i_child.childNodes[j].selectedIndex = 0;
-						else if ( i_child.childNodes[j].hasChildNodes() == false ) i_child.childNodes[j].textContent = '';
+						if ( i_child.childNodes[j].nodeName == "INPUT" ) i_child.childNodes[j].value = '';
+						else if ( i_child.childNodes[j].nodeName == "SELECT" ) i_child.childNodes[j].selectedIndex = 0;
+						else if ( i_child.childNodes[j].id ) i_child.childNodes[j].innerHTML = '';
 					}
 				}
 			}
@@ -175,4 +174,29 @@ function elem_copy_clear( elem_id ){		// копирование и вставк�
 	}
 	if ( last_elem ) parent.insertBefore(copy, last_elem);
 	else parent.appendChild(copy);
+}
+function create_inputs_send( parent_id ){	// создание input для childs (id=send_...) для соседних parent_id[0-9]*
+	const ARR_PAR_MAX_LENGTH = 999;		// лимит, т.к. узлы добавляются во время прохода по ним же
+	const regexp = /^send_(\w+)/;
+	let parent = document.getElementById( parent_id );
+	let grandpa = parent.parentElement;
+	for (let p = 0; p < grandpa.childNodes.length; p++) {
+		if ( grandpa.childNodes[p].nodeName == "DIV" && grandpa.childNodes[p].id.match(parent_id).length ){
+			let par_nodes = grandpa.childNodes[p].childNodes;
+			for (let i = 0; i < par_nodes.length && i < ARR_PAR_MAX_LENGTH; i++) {
+				let item = par_nodes[i];
+				if ( item.nodeName == "DIV" && item.id.match(regexp).length ){
+					if ( i > 0 ){
+						if ( par_nodes[i-1].nodeName != "INPUT" || par_nodes[i-1].getAttribute("name") != item.id.match(regexp)[1] ){
+							let input = document.createElement('input');	
+							input.setAttribute("name", item.id.match(regexp)[1]);			
+							input.setAttribute("type", "hidden");			
+							grandpa.childNodes[p].insertBefore(input, item);
+						}
+						par_nodes[i-1].value = delete_tags(item.innerHTML);
+					}
+				}
+			}
+		}
+	}
 }
