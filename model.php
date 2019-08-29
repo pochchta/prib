@@ -47,12 +47,27 @@ $arr_perm = array(				// разрешения
 	'r_self' =>  array ('A', 'W', 'R')
 
 );
-$arr_repair_fields = array(			// поля для редактирования пользователем
-	'name',
-	'type',
-	'date_release',
-	'state'
-);
+$arr_fields = array(	// поля для редактирования пользователем
+	'devs' => array(			
+		'name',
+		'type',
+		'number',
+		'date_release',
+		'state'
+	),
+	'repairs' => array(			
+		'text',
+		'parts',
+		'date_release',
+		'state'
+	),
+	'povs' => array(			
+		'text',
+		'parts',
+		'date_release',
+		'state'
+	)
+); 
 //QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 
 class table_settings{
@@ -477,13 +492,17 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	$double_item_exists = false;			// найдены ли дубликаты с таким же номером
 	$errors = array();
 	$message = 'Данные изменены успешно';
-	$data['name'] = htmlspecialchars( $data['name'] );
-	$data['type'] = htmlspecialchars( $data['type'] );
-	$data['number'] = htmlspecialchars( $data['number'] );
+	// $data['name'] = htmlspecialchars( $data['name'] );
+	// $data['type'] = htmlspecialchars( $data['type'] );
+	// $data['number'] = htmlspecialchars( $data['number'] );
 	if ( $data['number'] == '' ) $errors[] = 'Номер - обязательное поле';
-	if ( mb_strlen($data['name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
-	if ( mb_strlen($data['type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
-	if ( mb_strlen($data['number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	// if ( mb_strlen($data['name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
+	// if ( mb_strlen($data['type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	// if ( mb_strlen($data['number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	foreach ($data as $key => $value) {
+		if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Текст в ячейках должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+		$value = substr($value, 0, LIMIT_DEV_TEXT);
+	}
 	if ( $data['date_release'] != '' ){
 		if ( (strtotime($data['date_release']) && check_date($data['date_release'])) == false )
 			$errors[] = 'Выберите дату из календаря';
@@ -544,35 +563,37 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	return array( 'changed' => ! empty($errors) , 'double_item_exists' => $double_item_exists , 'item' => $out);
 }
 function dev_data_to_obj( $data ){
-	global $arr_repair_fields;
+	global $arr_fields;		// допустимые поля таблиц
 	$errors = array();
-	$dev = R::dispese('devs');
+	$dev = R::dispense('devs');
 	$matches;
 	$repair;
-	$r_n = -1;
 	foreach ($data as $key => $value){
-		if ( preg_match("/\Ado_/", $key) ){					// управляющие элементы
 
-		} elseif ( preg_match("/\Am_(\w+)\z/", $key, $matches) ){			// строка основной таблицы
+		if ( preg_match("/\Ado_/", $key) ){													// управляющие элементы
 
+		} elseif ( preg_match("/\Am_(\w+)\z/", $key, $matches) ){							// строка основной таблицы
+			if ( in_array($matches[1], $arr_fields['devs']) ) {	
+				if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Текст в таблице с данными прибора должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+				else $dev->$matches[1] = $value;
+			}			
 		} elseif ( preg_match("/\Ar_([a-zA-Z_]+)([0-9]*)\z/", $key, $matches) ){			// строка таблицы ремонтов
-			if ( isset($matches[2]) == false ) $matches[2] = 0;
-			if ( $matches[2] != $r_n || isset($repair) == false ){
-				if ( isset($repair) ) $dev->xownRepaList[] = $enter;
-				$r_n = $matches[2];
-				$repair = R::dispense('repairs');
+			if ( $matches[1] == $arr_fields['repairs'][0] || isset($repair) == false ){	
+				$repair = R::dispense('repairs');   // создание по первому элементу
 			}
-			if ( in_array($matches[1], $arr_repair_fields) ) {
-				$value = htmlspecialchars($value);
-				if ( $value > LIMIT_DEV_TEXT ) $errors[] = 'Текст в таблицах должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+			if ( in_array($matches[1], $arr_fields['repairs']) ) {	
+				if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Текст в таблице ремонтов должен быть меньше '.LIMIT_DEV_TEXT.' символов';
 				else $repair->$matches[1] = $value;
 			}
-		} elseif ( preg_match("/\Ap_(\w+)\z/", $key, $matches) ){			// строка таблицы поверок
+			if ( $matches[1] == $arr_fields['repairs'][count($arr_fields['repairs']) - 1] ) {
+				$dev->xownRepairsList[] = $repair;	// запись по последнему элементу
+			}
+		} elseif ( preg_match("/\Ap_(\w+)\z/", $key, $matches) ){							// строка таблицы поверок
 
-		}else{												// другое
+		}else{																				// другое
 
 		}
 	}
-
+	return $dev;
 }
 ?>

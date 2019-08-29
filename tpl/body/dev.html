@@ -11,13 +11,13 @@
 </form>
 
 <?php if ( $item_exists ) : ?>
-<form action="/dev.php" id="form_dev" method="POST">
+<form action="/dev.php" id="form_dev" method="POST">	
 	<input type="hidden" id="do_change_data">
 	<input type="hidden" id="do_ignore_double" value="<?php if($double_item_exists) echo $item->number; else echo 'false' ?>">
-	<input type="hidden" name="name">
-	<input type="hidden" name="type">
-	<input type="hidden" name="number">
-	<div class="table_edit">
+	<!-- <input type="hidden" name="name"> -->
+	<!-- <input type="hidden" name="type"> -->
+	<!-- <input type="hidden" name="number"> -->
+	<div class="table_edit">								<!-- главная таблица -->
 		<div class="row">
 			<div class="cell">Название</div>
 			<div class="cell">Тип</div>
@@ -27,15 +27,15 @@
 			<div class="cell">Дата последней правки</div>
 			<div class="cell">Автор последней правки</div>
 		</div>
-		<div class="row">
-			<div class="cell" contenteditable id="name"><?php if( isset($item->name) ) echo $item->name ?></div>
-			<div class="cell" contenteditable id="type"><?php if( isset($item->type) ) echo $item->type ?></div>
-			<div class="cell" contenteditable id="number"><?php if( isset($item->number) ) echo $item->number ?></div>
+		<div class="row" id="m_table_row">
+			<div class="cell" contenteditable id="send_m_name"><?php if( isset($item->name) ) echo $item->name ?></div>
+			<div class="cell" contenteditable id="send_m_type"><?php if( isset($item->type) ) echo $item->type ?></div>
+			<div class="cell" contenteditable id="send_m_number"><?php if( isset($item->number) ) echo $item->number ?></div>
 			<div class="cell">
-				<input type="date" name="date_release" <?php if(isset($item['date_release'])) echo "value={$item['date_release']}"?>>
+				<input type="date" name="m_date_release" <?php if(isset($item['date_release'])) echo "value={$item['date_release']}"?>>
 			</div>
 			<div class="cell">
-				<select name="state">
+				<select name="m_state">
 					<option value="on" <?php if( $item->state == "on") echo "selected" ?>>on</option>
 					<option value="off" <?php if( $item->state == "off") echo "selected" ?>>off</option>
 				</select>
@@ -44,22 +44,22 @@
 				<input type="date" value="<?php if( isset($item['last_date']) ) echo $item['last_date'] ?>" disabled>
 			</div>
 			<div class="cell"><?php if( isset($item['last_author']) ) echo $item['last_author'] ?></div>
-		</div>							<!-- главная таблица -->
+		</div>											   
 	</div>
 	<p></p>
 
-	<div class="table_edit" id="r_table">				   <!-- таблица ремонтов -->
+	<div class="table_edit" id="r_table">				    <!-- таблица ремонтов -->
 		<div class="row">
-			<div class="cell">Дата</div>
 			<div class="cell">Описание</div>
 			<div class="cell">Запчасти</div>
+			<div class="cell">Дата исполнения</div>
 			<div class="cell">Статус</div>
 			<div class="cell">Дата последней правки</div>
 			<div class="cell">Автор последней правки</div>
 		</div>
 		<div class="row" id="r_table_row">
-			<div class="cell" contenteditable id="send_r_name"><?php if( isset($item->name) ) echo $item->name ?></div>
-			<div class="cell" contenteditable id="send_r_number"><?php if( isset($item->number) ) echo $item->number ?></div>
+			<div class="cell" contenteditable id="send_r_text"><?php if( isset($item->name) ) echo $item->name ?></div>
+			<div class="cell" contenteditable id="send_r_parts"><?php if( isset($item->number) ) echo $item->number ?></div>
 			<div class="cell">
 				<input type="date" name="r_date_release" <?php if(isset($item['date_release'])) echo "value={$item['date_release']}"?>>
 			</div>
@@ -76,7 +76,7 @@
 		</div>
 	</div>
 	<button type="button" onClick="elem_copy_clear('r_table_row')">Новая строка</button>
-	<button type="button" onClick="create_inputs_send('r_table_row')">тест</button>
+	<!-- <button type="button" onClick="create_inputs_send('r_table_row')">тест</button> -->
 
 	<p></p>
 	<button type="button" onCLick="save_form_dev()">

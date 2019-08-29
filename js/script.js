@@ -79,20 +79,22 @@ function send_form( form_name , field_name ){		// отправка формы ( 
 	document.forms[form_name].submit();
 }
 function save_form_dev(){
-	document.getElementsByName("name")[0].value = delete_tags(document.getElementById("name").innerHTML);
-	document.getElementsByName("type")[0].value = delete_tags(document.getElementById("type").innerHTML);
-	document.getElementsByName("number")[0].value = delete_tags(document.getElementById("number").innerHTML);
+	// document.getElementsByName("name")[0].value = delete_tags(document.getElementById("name").innerHTML);
+	// document.getElementsByName("type")[0].value = delete_tags(document.getElementById("type").innerHTML);
+	// document.getElementsByName("number")[0].value = delete_tags(document.getElementById("number").innerHTML);
+	create_inputs_send('m_table_row');
+	create_inputs_send('r_table_row');
 	send_form("form_dev", "do_change_data");
 }
 function clear_form_dev(){
-	document.getElementsByName("name")[0].value = "";
-	document.getElementsByName("type")[0].value = "";
-	document.getElementsByName("number")[0].value = "";
-	document.getElementsByName("date_release")[0].value = "";
-	document.getElementsByName("state")[0].selectedIndex = 0;
-	document.getElementById("name").innerHTML = "";
-	document.getElementById("type").innerHTML = "";
-	document.getElementById("number").innerHTML = "";
+	// document.getElementsByName("m_name")[0].value = "";
+	// document.getElementsByName("m_type")[0].value = "";
+	// document.getElementsByName("m_number")[0].value = "";
+	document.getElementsByName("m_date_release")[0].value = "";
+	document.getElementsByName("m_state")[0].selectedIndex = 0;
+	document.getElementById("send_m_name").innerHTML = "";
+	document.getElementById("send_m_type").innerHTML = "";
+	document.getElementById("send_m_number").innerHTML = "";
 }
 function delete_tags( str ){		// удаление тегов div,br и замена (&nbsp;) и (<>&)
 	str = str.replace(/<div>/gi," ");
@@ -127,7 +129,7 @@ function elem_copy_clear( elem_id ){				// поиск последнего elem_
 	let last_elem;
 	for (let i = 0; i < parent.childNodes.length; i++) {     // поиск последнего id + "n"
 		if ( parent.childNodes[i].nodeName=="DIV" && parent.childNodes[i].hasAttribute('id') ){
-			if ( parent.childNodes[i].id.match(elem_id).length ){
+			if ( parent.childNodes[i].id.match(elem_id) ){
 				elem = parent.childNodes[i];
 				if ( i < parent.childNodes.length - 1 ) last_elem = parent.childNodes[i+1];
 				else last_elem = 0;
@@ -181,11 +183,11 @@ function create_inputs_send( parent_id ){	// создание input для child
 	let parent = document.getElementById( parent_id );
 	let grandpa = parent.parentElement;
 	for (let p = 0; p < grandpa.childNodes.length; p++) {
-		if ( grandpa.childNodes[p].nodeName == "DIV" && grandpa.childNodes[p].id.match(parent_id).length ){
+		if ( grandpa.childNodes[p].nodeName == "DIV" && grandpa.childNodes[p].id.match(parent_id) ){
 			let par_nodes = grandpa.childNodes[p].childNodes;
 			for (let i = 0; i < par_nodes.length && i < ARR_PAR_MAX_LENGTH; i++) {
 				let item = par_nodes[i];
-				if ( item.nodeName == "DIV" && item.id.match(regexp).length ){
+				if ( item.nodeName == "DIV" && item.id.match(regexp) ){
 					if ( i > 0 ){
 						if ( par_nodes[i-1].nodeName != "INPUT" || par_nodes[i-1].getAttribute("name") != item.id.match(regexp)[1] ){
 							let input = document.createElement('input');	

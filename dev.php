@@ -43,9 +43,16 @@
 			$double_item_exists = $out['double_item_exists'];
 		}
 
-		include 'tpl/head.html';	//v($_POST);
-		include 'tpl/errors.html';	//v($settings);//v($item);
-		include 'tpl/message.html';
+		include 'tpl/head.html';
+
+		// v($settings);
+		// v($item);
+		// v($_SESSION['POST']);
+		// v( dev_data_to_obj($_SESSION['POST']) );
+		// dev_data_to_obj($_SESSION['POST']);
+
+		include 'tpl/errors.html';	
+		include 'tpl/message.html';		
 		if ( isset($_SESSION['logged_user']) ) {
 			include 'tpl/header/user.html';
 		} else {
