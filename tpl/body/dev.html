@@ -32,7 +32,7 @@
 			<div class="cell" contenteditable id="send_m_type"><?php if( isset($item->type) ) echo $item->type ?></div>
 			<div class="cell" contenteditable id="send_m_number"><?php if( isset($item->number) ) echo $item->number ?></div>
 			<div class="cell">
-				<input type="date" name="m_date_release" <?php if(isset($item['date_release'])) echo "value={$item['date_release']}"?>>
+				<input type="date" name="m_date_release" <?php if(isset($item->date_release)) echo "value={$item->date_release}"?>>
 			</div>
 			<div class="cell">
 				<select name="m_state">
@@ -41,9 +41,9 @@
 				</select>
 			</div>			
 			<div class="cell">
-				<input type="date" value="<?php if( isset($item['last_date']) ) echo $item['last_date'] ?>" disabled>
+				<input type="date" value="<?php if( isset($item->last_date) ) echo $item->last_date ?>" disabled>
 			</div>
-			<div class="cell"><?php if( isset($item['last_author']) ) echo $item['last_author'] ?></div>
+			<div class="cell"><?php if( isset($item->last_author) ) echo $item->last_author ?></div>
 		</div>											   
 	</div>
 	<p></p>
@@ -61,7 +61,7 @@
 			<div class="cell" contenteditable id="send_r_text"><?php if( isset($item->name) ) echo $item->name ?></div>
 			<div class="cell" contenteditable id="send_r_parts"><?php if( isset($item->number) ) echo $item->number ?></div>
 			<div class="cell">
-				<input type="date" name="r_date_release" <?php if(isset($item['date_release'])) echo "value={$item['date_release']}"?>>
+				<input type="date" name="r_date_release" <?php if(isset($item->date_release)) echo "value={$item->date_release}"?>>
 			</div>
 			<div class="cell">
 				<select name="r_state">
@@ -70,9 +70,9 @@
 				</select>
 			</div>			
 			<div class="cell">
-				<input type="date" value="<?php if( isset($item['last_date']) ) echo $item['last_date'] ?>" disabled>
+				<input type="date" value="<?php if( isset($item->last_date) ) echo $item->last_date ?>" disabled>
 			</div>
-			<div class="cell" id="r_last_author"><?php if( isset($item['last_author']) ) echo $item['last_author'] ?></div>
+			<div class="cell" id="r_last_author"><?php if( isset($item->last_author) ) echo $item->last_author ?></div>
 		</div>
 	</div>
 	<button type="button" onClick="elem_copy_clear('r_table_row')">Новая строка</button>

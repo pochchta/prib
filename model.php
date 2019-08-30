@@ -492,98 +492,85 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	$double_item_exists = false;			// найдены ли дубликаты с таким же номером
 	$errors = array();
 	$message = 'Данные изменены успешно';
-	// $data['name'] = htmlspecialchars( $data['name'] );
-	// $data['type'] = htmlspecialchars( $data['type'] );
-	// $data['number'] = htmlspecialchars( $data['number'] );
-	if ( $data['number'] == '' ) $errors[] = 'Номер - обязательное поле';
-	// if ( mb_strlen($data['name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
-	// if ( mb_strlen($data['type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
-	// if ( mb_strlen($data['number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	// $data['m_name'] = htmlspecialchars( $data['m_name'] );
+	// $data['m_type'] = htmlspecialchars( $data['m_type'] );
+	// $data['m_number'] = htmlspecialchars( $data['m_number'] );
+	if ( $data['m_number'] == '' ) $errors[] = 'Номер - обязательное поле';
+	if ( mb_strlen($data['m_name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
+	if ( mb_strlen($data['m_type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	if ( mb_strlen($data['m_number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
 	foreach ($data as $key => $value) {
 		if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Текст в ячейках должен быть меньше '.LIMIT_DEV_TEXT.' символов';
 		$value = substr($value, 0, LIMIT_DEV_TEXT);
+		if ( preg_match("/\A[a-zA-Z]_date_/", $key) ){
+			if ( $value != '' ){
+				if ( (strtotime($value) && check_date($value)) == false )
+					$errors[] = 'Выберите дату из календаря';
+			}else {
+				$value = "1902-01-01"; //Корректным диапазоном временных меток обычно являются даты с 13 декабря 1901 20:45:54 UTC по 19 января 2038 03:14:07 UTC. (Эти даты соответствуют минимальному и максимальному значению 32-битового знакового целого). ( Функция strtotime() выдаст ошибку при выходе за диапазон )
+			}
+		}
+		if ( preg_match("/\A[a-zA-Z]_state\z/", $key) ){
+			if ( in_array($value, $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
+		}
 	}
-	if ( $data['date_release'] != '' ){
-		if ( (strtotime($data['date_release']) && check_date($data['date_release'])) == false )
-			$errors[] = 'Выберите дату из календаря';
-	}else {
-		$data['date_release'] = "1902-01-01"; //Корректным диапазоном временных меток обычно являются даты с 13 декабря 1901 20:45:54 UTC по 19 января 2038 03:14:07 UTC. (Эти даты соответствуют минимальному и максимальному значению 32-битового знакового целого). ( Функция strtotime() выдаст ошибку при выходе за диапазон )
-	}
-	if ( in_array($data['state'], $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
-
 	$count_double = R::count( $table_name , 'id <> ? AND name = ? AND type = ? AND number = ? AND date_release = ?' , 
-		array( $id , $data['name'] , $data['type'] , $data['number'] , $data['date_release']) );
-	$count_double_number = R::count( $table_name , 'id <> ? AND number = ?' , array($id , $data['number']) );
+		array( $id , $data['m_name'] , $data['m_type'] , $data['m_number'] , $data['m_date_release']) );
+	$count_double_number = R::count( $table_name , 'id <> ? AND number = ?' , array($id , $data['m_number']) );
 	if ( $count_double ){
 		$errors[] = 'Этот прибор уже внесен';
-	} elseif ( $count_double_number && ($data['do_ignore_double'] !== $data['number']) && $test_double ){
+	} elseif ( $count_double_number && ($data['do_ignore_double'] !== $data['m_number']) && $test_double ){
 		$double_item_exists = true;
 		$errors[] = 'Прибор с таким номером уже существует';
 	}
 
 	if ( empty($errors) ){
+		$item = dev_data_to_obj( $data, $id );
 		if ( $id == 0 ) {
-			$item = R::dispense( $table_name );
 			$message = 'Создана новая запись';
-		}
-		else {
-			$item = R::load( $table_name , $id );
+		}else {
 			if ( $item->id == 0 ) $errors[] = 'Запись не найдена';
+			if ( comp_obj($item, one_item($id, 'devs')) ) $errors[] = 'Вы не изменили данные';
 		}
 		if ( empty($errors) ) {
-			if ( ($item->name != $data['name']) || ($item->type != $data['type']) || ($item->number != $data['number']) || 
-					($item->date_release != $data['date_release']) || ($item->state != $data['state']) ){
-				$item->name = $data['name'];
-				$item->type = $data['type'];
-				$item->number = $data['number'];
-				$item->date_release = $data['date_release'];
-				$item->state = $data['state'];
-				$item->last_date = date("Y-m-d");
-				$item->last_author = $_SESSION['logged_user']->login;
-				R::begin();
-				try{
-					R::store($item);
-					R::commit();
-				}catch (Exception $e){
-					R::rollback();
-					$errors[] = 'Нет связи';
-				}
-			} else $errors[] = 'Вы не изменили данные';
+			$item->last_date = date("Y-m-d");
+			$item->last_author = $_SESSION['logged_user']->login;
+			R::begin();
+			try{
+				R::store($item);
+				R::commit();
+			}catch (Exception $e){
+				R::rollback();
+				$errors[] = 'Нет связи';
+			}
 		}
 	}
-	if ( empty($errors) ) {
-		$_SESSION['messages'][] = $message;
-		$out = $item;
-	}else{
-		unset($data['do_change_data'] , $data['do_ignore_double']);
-		$out = R::convertToBean('devs', $data);
-	}
+	if ( empty($errors) ) $_SESSION['messages'][] = $message;
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
-
-	return array( 'changed' => ! empty($errors) , 'double_item_exists' => $double_item_exists , 'item' => $out);
+	return array( 'changed' => ! empty($errors) , 'double_item_exists' => $double_item_exists , 'item' => $item);
 }
-function dev_data_to_obj( $data ){
-	global $arr_fields;		// допустимые поля таблиц
+function dev_data_to_obj( $data , $id ){
+	global $arr_fields;		// допустимые поля таблиц, важен порядок
 	$errors = array();
-	$dev = R::dispense('devs');
-	$matches;
+	$dev;
 	$repair;
+	$matches;
+	if ( $id ) $dev = R::load( 'devs' , $id );
+	if ( $id == 0 || $dev->id == 0 ) $dev = R::dispense('devs');
 	foreach ($data as $key => $value){
 
 		if ( preg_match("/\Ado_/", $key) ){													// управляющие элементы
 
 		} elseif ( preg_match("/\Am_(\w+)\z/", $key, $matches) ){							// строка основной таблицы
 			if ( in_array($matches[1], $arr_fields['devs']) ) {	
-				if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Текст в таблице с данными прибора должен быть меньше '.LIMIT_DEV_TEXT.' символов';
-				else $dev->$matches[1] = $value;
+				$dev->$matches[1] = $value;
 			}			
 		} elseif ( preg_match("/\Ar_([a-zA-Z_]+)([0-9]*)\z/", $key, $matches) ){			// строка таблицы ремонтов
 			if ( $matches[1] == $arr_fields['repairs'][0] || isset($repair) == false ){	
 				$repair = R::dispense('repairs');   // создание по первому элементу
 			}
 			if ( in_array($matches[1], $arr_fields['repairs']) ) {	
-				if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Текст в таблице ремонтов должен быть меньше '.LIMIT_DEV_TEXT.' символов';
-				else $repair->$matches[1] = $value;
+				$repair->$matches[1] = $value;
 			}
 			if ( $matches[1] == $arr_fields['repairs'][count($arr_fields['repairs']) - 1] ) {
 				$dev->xownRepairsList[] = $repair;	// запись по последнему элементу
@@ -595,5 +582,45 @@ function dev_data_to_obj( $data ){
 		}
 	}
 	return $dev;
+}
+function comp_obj( $obj1, $obj2 ){
+	$equal = false;
+	$own_exists = false;
+	$own_equal_i = 0;
+	$matches;
+	$regexp_last = "/\A(last_[\w]+)\z/";
+	$regexp_own = "/\A(own[A-Z][\w]+)\z/";
+	$arr1 = $obj1->export();
+	$arr2 = $obj2->export();
+	// v($arr1);
+	// v($arr2);
+	foreach ($arr1 as $key => $value) {		// ключи last_... не нужно сравнивать, поэтому удаляем
+		if ( preg_match($regexp_last, $key, $matches) ) unset($arr1[$key], $arr2[$key]);
+		if ( preg_match($regexp_own, $key, $matches) ){
+			foreach ($arr1[$key] as $own_key => $own_value) {
+				if ( preg_match($regexp_last, $own_key, $matches) ) unset($arr1[$key][$own_key], $arr2[$key][$own_key]);
+			}
+		}
+	}
+	// v($arr1);
+	// v($arr2);
+	if ( count(array_diff($arr1, $arr2)) == 0 ){
+		foreach ($arr1 as $key => $value) {
+			if ( preg_match($regexp_own, $key, $matches) ){
+				$own_exists = true;
+				if ( is_array($arr1[$key]) && is_array($arr2[$key]) && count($arr1) == count($arr2) ){
+					for ($i=0; $i < count($arr1); $i++) { 
+						if ( count(array_diff($arr1[$key][$i], $arr2[$key][$i])) == 0 ) $own_equal_i++;
+					}
+					if ( $i == $own_equal_i ) $equal = true;
+				}
+			}
+		}
+		if ( $own_exists == false) $equal = true;
+	}
+	// v($arr1);
+	// v($arr2);
+	// v($equal);
+	return $equal;
 }
 ?>

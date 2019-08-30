@@ -45,8 +45,7 @@
 
 		include 'tpl/head.html';
 
-		// v($settings);
-		// v($item);
+		v($item);
 		// v($_SESSION['POST']);
 		// v( dev_data_to_obj($_SESSION['POST']) );
 		// dev_data_to_obj($_SESSION['POST']);
