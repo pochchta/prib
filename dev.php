@@ -44,14 +44,15 @@
 		}
 
 		include 'tpl/head.html';
+		include 'tpl/errors.html';	
+		include 'tpl/message.html';		
 
-		v($item);
+		// $item->ownRepairsList;
+		// v($item);
 		// v($_SESSION['POST']);
 		// v( dev_data_to_obj($_SESSION['POST']) );
 		// dev_data_to_obj($_SESSION['POST']);
 
-		include 'tpl/errors.html';	
-		include 'tpl/message.html';		
 		if ( isset($_SESSION['logged_user']) ) {
 			include 'tpl/header/user.html';
 		} else {

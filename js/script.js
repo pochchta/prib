@@ -69,21 +69,26 @@ function show_popup_post( text, login, form_name ) {
 	popup_no.setAttribute( 'onclick', 'hide_popup()' );
 	popup.setAttribute('style', 'display:block');
 }
-function send_form( form_name , field_name ){		// отправка формы ( id , id )
+function send_form( form_name , fields_name ){		// отправка формы ( id , id )
 	var arr = [];									// еще устанавливается name = id для поля подтверждения
-	arr = arr.concat(field_name);					// field_name - строка или массив строк
+	arr = arr.concat(fields_name);					// fields_name - строка или массив строк
 	arr.forEach(function(item, i, arr) {
 		var hidden = document.getElementById(item);
 		hidden.setAttribute( 'name', item );
 	});
 	document.forms[form_name].submit();
 }
-function save_form_dev(){
+function save_form_dev( inputs_name ){
+	arr = [];
+	arr = arr.concat( inputs_name );
+	arr.forEach(function(item, i, arr) {
+		create_inputs_send( item );
+	});
 	// document.getElementsByName("name")[0].value = delete_tags(document.getElementById("name").innerHTML);
 	// document.getElementsByName("type")[0].value = delete_tags(document.getElementById("type").innerHTML);
 	// document.getElementsByName("number")[0].value = delete_tags(document.getElementById("number").innerHTML);
-	create_inputs_send('m_table_row');
-	create_inputs_send('r_table_row');
+	// create_inputs_send('m_table_row');
+	// create_inputs_send('r_table_row');
 	send_form("form_dev", "do_change_data");
 }
 function clear_form_dev(){
@@ -127,9 +132,10 @@ function elem_copy_clear( elem_id ){				// поиск последнего elem_
 	let parent = elem.parentElement;
 	let copy;
 	let last_elem;
+	let matches = elem_id.match( regexp );
 	for (let i = 0; i < parent.childNodes.length; i++) {     // поиск последнего id + "n"
 		if ( parent.childNodes[i].nodeName=="DIV" && parent.childNodes[i].hasAttribute('id') ){
-			if ( parent.childNodes[i].id.match(elem_id) ){
+			if ( parent.childNodes[i].id.match(matches[1]) ){
 				elem = parent.childNodes[i];
 				if ( i < parent.childNodes.length - 1 ) last_elem = parent.childNodes[i+1];
 				else last_elem = 0;
@@ -181,9 +187,10 @@ function create_inputs_send( parent_id ){	// создание input для child
 	const ARR_PAR_MAX_LENGTH = 999;		// лимит, т.к. узлы добавляются во время прохода по ним же
 	const regexp = /^send_(\w+)/;
 	let parent = document.getElementById( parent_id );
+	let matches = parent_id.match( /([a-zA-Z_]+)([0-9]*)/ );
 	let grandpa = parent.parentElement;
 	for (let p = 0; p < grandpa.childNodes.length; p++) {
-		if ( grandpa.childNodes[p].nodeName == "DIV" && grandpa.childNodes[p].id.match(parent_id) ){
+		if ( grandpa.childNodes[p].nodeName == "DIV" && grandpa.childNodes[p].id.match(matches[1]) ){
 			let par_nodes = grandpa.childNodes[p].childNodes;
 			for (let i = 0; i < par_nodes.length && i < ARR_PAR_MAX_LENGTH; i++) {
 				let item = par_nodes[i];

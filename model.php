@@ -55,7 +55,7 @@ $arr_fields = array(	// поля для редактирования польз�
 		'date_release',
 		'state'
 	),
-	'repairs' => array(			
+	'repairs' => array(	
 		'text',
 		'parts',
 		'date_release',
@@ -423,11 +423,17 @@ function list_fields( $table_name ){
 	else $out['next'] = false;	
 	return $out;
 }
-function one_item( $id , $table_name ){
+function one_item( $id , $table_name , $own_tables=array() ){
 	if ( check_numeric($id) ){
 		$item = R::load( $table_name , $id );
 		if ( $item->id ) {
 			$out = $item;
+			if( count($own_tables) ){
+				foreach ($own_tables as $value) {
+					$own_item = 'own'.$value.'List';
+					$item->$own_item;
+				}
+			}
 			if ( $out->password ) $out->password = '';
 		} else{
 			// $_SESSION['errors'][] = 'Запись не найдена';
@@ -530,14 +536,14 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 			$message = 'Создана новая запись';
 		}else {
 			if ( $item->id == 0 ) $errors[] = 'Запись не найдена';
-			if ( comp_obj($item, one_item($id, 'devs')) ) $errors[] = 'Вы не изменили данные';
+			if ( comp_obj($item, one_item($id, 'devs', array('Repairs'))) ) $errors[] = 'Вы не изменили данные';
 		}
 		if ( empty($errors) ) {
 			$item->last_date = date("Y-m-d");
 			$item->last_author = $_SESSION['logged_user']->login;
 			R::begin();
 			try{
-				R::store($item);
+				// R::store($item);
 				R::commit();
 			}catch (Exception $e){
 				R::rollback();
@@ -555,6 +561,8 @@ function dev_data_to_obj( $data , $id ){
 	$dev;
 	$repair;
 	$matches;
+	$empty_count;			// количество пустых ячеек
+	$equal_count;			// количество одинаковых ячеек
 	if ( $id ) $dev = R::load( 'devs' , $id );
 	if ( $id == 0 || $dev->id == 0 ) $dev = R::dispense('devs');
 	foreach ($data as $key => $value){
@@ -566,14 +574,27 @@ function dev_data_to_obj( $data , $id ){
 				$dev->$matches[1] = $value;
 			}			
 		} elseif ( preg_match("/\Ar_([a-zA-Z_]+)([0-9]*)\z/", $key, $matches) ){			// строка таблицы ремонтов
-			if ( $matches[1] == $arr_fields['repairs'][0] || isset($repair) == false ){	
-				$repair = R::dispense('repairs');   // создание по первому элементу
+			if ( $matches[1] == 'id' ){
+				if ( $value ) $repair = $dev->ownRepairsList[$value];
+				if ( $value == 0 || $repair->id == 0 ) {
+					$repair = R::dispense('repairs');
+				}
+				$empty_count = 0;
+				$equal_count = 0;
 			}
-			if ( in_array($matches[1], $arr_fields['repairs']) ) {	
-				$repair->$matches[1] = $value;
-			}
-			if ( $matches[1] == $arr_fields['repairs'][count($arr_fields['repairs']) - 1] ) {
-				$dev->xownRepairsList[] = $repair;	// запись по последнему элементу
+			if ( isset($repair) ){
+				if ( in_array($matches[1], $arr_fields['repairs']) ) {	
+					if ( $value != '' ) $empty_count++;
+					if ( $value == $repair->$matches[1] ) $equal_count++;
+					$repair->$matches[1] = $value;					
+				}
+				if ( $matches[1] == $arr_fields['repairs'][count($arr_fields['repairs']) - 1] ) {
+					if ( $equal_count != count($arr_fields['repairs']) ) {
+						$repair->last_date = date("Y-m-d");
+						$repair->last_author = $_SESSION['logged_user']->login;
+					}
+					if ( $empty_count && $repair->id == 0 ) $dev->ownRepairsList[] = $repair;	// запись по последнему элементу
+				}
 			}
 		} elseif ( preg_match("/\Ap_(\w+)\z/", $key, $matches) ){							// строка таблицы поверок
 
@@ -608,8 +629,8 @@ function comp_obj( $obj1, $obj2 ){
 		foreach ($arr1 as $key => $value) {
 			if ( preg_match($regexp_own, $key, $matches) ){
 				$own_exists = true;
-				if ( is_array($arr1[$key]) && is_array($arr2[$key]) && count($arr1) == count($arr2) ){
-					for ($i=0; $i < count($arr1); $i++) { 
+				if ( is_array($arr1[$key]) && is_array($arr2[$key]) && count($arr1[$key]) == count($arr2[$key]) ){
+					for ($i=0; $i < count($arr1[$key]); $i++) { 
 						if ( count(array_diff($arr1[$key][$i], $arr2[$key][$i])) == 0 ) $own_equal_i++;
 					}
 					if ( $i == $own_equal_i ) $equal = true;
