@@ -506,19 +506,24 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	if ( mb_strlen($data['m_type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
 	if ( mb_strlen($data['m_number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
 	foreach ($data as $key => $value) {
-		if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Текст в ячейках должен быть меньше '.LIMIT_DEV_TEXT.' символов';
-		$value = substr($value, 0, LIMIT_DEV_TEXT);
+		if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ){
+			$errors[] = 'Текст в ячейках должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+			$data[$key] = substr($value, 0, LIMIT_DEV_TEXT);
+		}
 		if ( preg_match("/\A[a-zA-Z]_date_/", $key) ){
 			if ( $value != '' ){
 				if ( (strtotime($value) && check_date($value)) == false )
 					$errors[] = 'Выберите дату из календаря';
 			}else {
-				$value = "1902-01-01"; //Корректным диапазоном временных меток обычно являются даты с 13 декабря 1901 20:45:54 UTC по 19 января 2038 03:14:07 UTC. (Эти даты соответствуют минимальному и максимальному значению 32-битового знакового целого). ( Функция strtotime() выдаст ошибку при выходе за диапазон )
+				$data[$key] = "1902-01-01"; //Корректным диапазоном временных меток обычно являются даты с 13 декабря 1901 20:45:54 UTC по 19 января 2038 03:14:07 UTC. (Эти даты соответствуют минимальному и максимальному значению 32-битового знакового целого). ( Функция strtotime() выдаст ошибку при выходе за диапазон )
 			}
-		}
+		}	
 		if ( preg_match("/\A[a-zA-Z]_state\z/", $key) ){
 			if ( in_array($value, $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
 		}
+		if ( preg_match("/\Ar_text[0-9]*\z/", $key) ){
+			if ( $value == '' ) $errors[] = 'Таблица ремонтов => описание - обязательное поле';
+		}		
 	}
 	$count_double = R::count( $table_name , 'id <> ? AND name = ? AND type = ? AND number = ? AND date_release = ?' , 
 		array( $id , $data['m_name'] , $data['m_type'] , $data['m_number'] , $data['m_date_release']) );
@@ -529,9 +534,8 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 		$double_item_exists = true;
 		$errors[] = 'Прибор с таким номером уже существует';
 	}
-
+	$item = dev_data_to_obj( $data, $id );
 	if ( empty($errors) ){
-		$item = dev_data_to_obj( $data, $id );
 		if ( $id == 0 ) {
 			$message = 'Создана новая запись';
 		}else {
@@ -539,11 +543,13 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 			if ( comp_obj($item, one_item($id, 'devs', array('Repairs'))) ) $errors[] = 'Вы не изменили данные';
 		}
 		if ( empty($errors) ) {
-			$item->last_date = date("Y-m-d");
-			$item->last_author = $_SESSION['logged_user']->login;
+			if ( comp_obj($item, one_item($id, 'devs'), false) == false ){
+				$item->last_date = date("Y-m-d");
+				$item->last_author = $_SESSION['logged_user']->login;
+			}
 			R::begin();
 			try{
-				// R::store($item);
+				R::store($item);
 				R::commit();
 			}catch (Exception $e){
 				R::rollback();
@@ -561,7 +567,7 @@ function dev_data_to_obj( $data , $id ){
 	$dev;
 	$repair;
 	$matches;
-	$empty_count;			// количество пустых ячеек
+	$not_empty_count;		// количество непустых ячеек
 	$equal_count;			// количество одинаковых ячеек
 	if ( $id ) $dev = R::load( 'devs' , $id );
 	if ( $id == 0 || $dev->id == 0 ) $dev = R::dispense('devs');
@@ -579,21 +585,21 @@ function dev_data_to_obj( $data , $id ){
 				if ( $value == 0 || $repair->id == 0 ) {
 					$repair = R::dispense('repairs');
 				}
-				$empty_count = 0;
+				$not_empty_count = 0;
 				$equal_count = 0;
 			}
 			if ( isset($repair) ){
 				if ( in_array($matches[1], $arr_fields['repairs']) ) {	
-					if ( $value != '' ) $empty_count++;
+					if ( $value != '' ) $not_empty_count++;
 					if ( $value == $repair->$matches[1] ) $equal_count++;
-					$repair->$matches[1] = $value;					
+					$repair->$matches[1] = $value;				
 				}
 				if ( $matches[1] == $arr_fields['repairs'][count($arr_fields['repairs']) - 1] ) {
 					if ( $equal_count != count($arr_fields['repairs']) ) {
 						$repair->last_date = date("Y-m-d");
 						$repair->last_author = $_SESSION['logged_user']->login;
 					}
-					if ( $empty_count && $repair->id == 0 ) $dev->ownRepairsList[] = $repair;	// запись по последнему элементу
+					if ( $not_empty_count && $repair->id == 0 ) $dev->ownRepairsList[] = $repair;	// запись по последнему элементу
 				}
 			}
 		} elseif ( preg_match("/\Ap_(\w+)\z/", $key, $matches) ){							// строка таблицы поверок
@@ -604,7 +610,7 @@ function dev_data_to_obj( $data , $id ){
 	}
 	return $dev;
 }
-function comp_obj( $obj1, $obj2 ){
+function comp_obj( $obj1, $obj2 , $full=true ){
 	$equal = false;
 	$own_exists = false;
 	$own_equal_i = 0;
@@ -618,22 +624,29 @@ function comp_obj( $obj1, $obj2 ){
 	foreach ($arr1 as $key => $value) {		// ключи last_... не нужно сравнивать, поэтому удаляем
 		if ( preg_match($regexp_last, $key, $matches) ) unset($arr1[$key], $arr2[$key]);
 		if ( preg_match($regexp_own, $key, $matches) ){
-			foreach ($arr1[$key] as $own_key => $own_value) {
-				if ( preg_match($regexp_last, $own_key, $matches) ) unset($arr1[$key][$own_key], $arr2[$key][$own_key]);
+			if ( $full == false ) unset($arr1[$key], $arr2[$key]);
+			else foreach ($arr1[$key] as $own_n => $own_n_value) {
+				foreach ($arr1[$key][$own_n] as $own_key => $own_key_value) {
+					if ( preg_match($regexp_last, $own_key, $matches) ) 
+						unset($arr1[$key][$own_n][$own_key], $arr2[$key][$own_n][$own_key]);
+				}
 			}
 		}
 	}
+	// v($full);
 	// v($arr1);
 	// v($arr2);
 	if ( count(array_diff($arr1, $arr2)) == 0 ){
-		foreach ($arr1 as $key => $value) {
-			if ( preg_match($regexp_own, $key, $matches) ){
-				$own_exists = true;
-				if ( is_array($arr1[$key]) && is_array($arr2[$key]) && count($arr1[$key]) == count($arr2[$key]) ){
-					for ($i=0; $i < count($arr1[$key]); $i++) { 
-						if ( count(array_diff($arr1[$key][$i], $arr2[$key][$i])) == 0 ) $own_equal_i++;
+		if ( $full ) {
+			foreach ($arr1 as $key => $value) {
+				if ( preg_match($regexp_own, $key, $matches) ){
+					$own_exists = true;
+					if ( is_array($arr1[$key]) && is_array($arr2[$key]) && count($arr1[$key]) == count($arr2[$key]) ){
+						for ($i=0; $i < count($arr1[$key]); $i++) { 
+							if ( count(array_diff($arr1[$key][$i], $arr2[$key][$i])) == 0 ) $own_equal_i++;
+						}
+						if ( $i == $own_equal_i ) $equal = true;
 					}
-					if ( $i == $own_equal_i ) $equal = true;
 				}
 			}
 		}
