@@ -1,4 +1,5 @@
-<?php 
+<?php
+//QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 date_default_timezone_set('Asia/Irkutsk');
 require 'libs/rb.php';					// RedBean php
 // R::setup( 'mysql:host=localhost;dbname=devices', 'userbd', '2' ); //for both mysql or mariaDB
@@ -66,9 +67,11 @@ $arr_fields = array(	// поля для редактирования польз�
 		'parts',
 		'date_release',
 		'state'
+	),
+	'min_fields' => array(		// минимальное количество заполненных полей
+		'repairs' => 3
 	)
 ); 
-//QRcode::png( 'http://localhost/index.php?n=1' , 'img/1.png' , 'H');
 
 class table_settings{
 	var $limit;
@@ -521,9 +524,9 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 		if ( preg_match("/\A[a-zA-Z]_state\z/", $key) ){
 			if ( in_array($value, $arr_state) == false ) $errors[] = 'Выберите состояние из списка';
 		}
-		if ( preg_match("/\Ar_text[0-9]*\z/", $key) ){
-			if ( $value == '' ) $errors[] = 'Таблица ремонтов => описание - обязательное поле';
-		}		
+		// if ( preg_match("/\Ar_text[0-9]*\z/", $key) ){
+		// 	if ( $value == '' ) $errors[] = 'Таблица ремонтов - описание - обязательное поле';
+		// }		
 	}
 	$count_double = R::count( $table_name , 'id <> ? AND name = ? AND type = ? AND number = ? AND date_release = ?' , 
 		array( $id , $data['m_name'] , $data['m_type'] , $data['m_number'] , $data['m_date_release']) );
@@ -535,17 +538,37 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 		$errors[] = 'Прибор с таким номером уже существует';
 	}
 	$item = dev_data_to_obj( $data, $id );
+	$original_item = one_item( $id, 'devs', array('Repairs') );
 	if ( empty($errors) ){
 		if ( $id == 0 ) {
 			$message = 'Создана новая запись';
 		}else {
 			if ( $item->id == 0 ) $errors[] = 'Запись не найдена';
-			if ( comp_obj($item, one_item($id, 'devs', array('Repairs'))) ) $errors[] = 'Вы не изменили данные';
+			if ( comp_obj($item, $original_item) ) $errors[] = 'Вы не изменили данные';
 		}
+
+		$repairs_count = 0;
+		foreach ($item->ownRepairsList as $rep_key => $rep_value) {
+			$repairs_count++;
+			$double_repairs_count = 0;
+			foreach ($item->ownRepairsList as $comp_key => $comp_value){
+				if ( $comp_key > $rep_key ){
+					if ( comp_obj($rep_value, $comp_value, false, array("/id\z/", "/\Astate\z/")) ) $double_repairs_count++;
+				}
+			}
+			if ( $double_repairs_count ) $errors[] = "Таблица ремонтов - запись №{$repairs_count} имеет дубли. Проверьте данные.";	
+		}
+		
 		if ( empty($errors) ) {
-			if ( comp_obj($item, one_item($id, 'devs'), false) == false ){
+			if ( comp_obj($item, $original_item, false) == false ){
 				$item->last_date = date("Y-m-d");
 				$item->last_author = $_SESSION['logged_user']->login;
+			}
+			foreach ($item->ownRepairsList as $key => $value) {
+				if ( comp_obj($item->ownRepairsList[$key], $original_item->ownRepairsList[$key], false) == false ){
+					$value->last_date = date("Y-m-d");
+					$item->ownRepairsList[$key]->last_author = $_SESSION['logged_user']->login;					
+				}
 			}
 			R::begin();
 			try{
@@ -561,18 +584,16 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 	return array( 'changed' => ! empty($errors) , 'double_item_exists' => $double_item_exists , 'item' => $item);
 }
-function dev_data_to_obj( $data , $id ){
+function dev_data_to_obj( $data , $id ){	// , & $errors=NULL 
 	global $arr_fields;		// допустимые поля таблиц, важен порядок
-	$errors = array();
+	// $errors = array();
 	$dev;
 	$repair;
 	$matches;
 	$not_empty_count;		// количество непустых ячеек
-	$equal_count;			// количество одинаковых ячеек
 	if ( $id ) $dev = R::load( 'devs' , $id );
 	if ( $id == 0 || $dev->id == 0 ) $dev = R::dispense('devs');
 	foreach ($data as $key => $value){
-
 		if ( preg_match("/\Ado_/", $key) ){													// управляющие элементы
 
 		} elseif ( preg_match("/\Am_(\w+)\z/", $key, $matches) ){							// строка основной таблицы
@@ -586,20 +607,16 @@ function dev_data_to_obj( $data , $id ){
 					$repair = R::dispense('repairs');
 				}
 				$not_empty_count = 0;
-				$equal_count = 0;
 			}
 			if ( isset($repair) ){
 				if ( in_array($matches[1], $arr_fields['repairs']) ) {	
 					if ( $value != '' ) $not_empty_count++;
-					if ( $value == $repair->$matches[1] ) $equal_count++;
-					$repair->$matches[1] = $value;				
+					$repair->$matches[1] = $value;
 				}
 				if ( $matches[1] == $arr_fields['repairs'][count($arr_fields['repairs']) - 1] ) {
-					if ( $equal_count != count($arr_fields['repairs']) ) {
-						$repair->last_date = date("Y-m-d");
-						$repair->last_author = $_SESSION['logged_user']->login;
+					if ( $not_empty_count >= $arr_fields['min_fields']['repairs'] && $repair->id == 0 ){// запись по последнему элементу
+						$dev->ownRepairsList[] = $repair;						
 					}
-					if ( $not_empty_count && $repair->id == 0 ) $dev->ownRepairsList[] = $repair;	// запись по последнему элементу
 				}
 			}
 		} elseif ( preg_match("/\Ap_(\w+)\z/", $key, $matches) ){							// строка таблицы поверок
@@ -610,18 +627,21 @@ function dev_data_to_obj( $data , $id ){
 	}
 	return $dev;
 }
-function comp_obj( $obj1, $obj2 , $full=true ){
+function comp_obj( $obj1, $obj2 , $full=true , $regexp_ignore=array() ){		// full - с учетом own...List[]
 	$equal = false;
 	$own_exists = false;
 	$own_equal_i = 0;
 	$matches;
 	$regexp_last = "/\A(last_[\w]+)\z/";
 	$regexp_own = "/\A(own[A-Z][\w]+)\z/";
-	$arr1 = $obj1->export();
-	$arr2 = $obj2->export();
-	// v($arr1);
-	// v($arr2);
+	$arr1 = array();
+	$arr2 = array();
+	if ( isset($obj1) ) $arr1 = $obj1->export();
+	if ( isset($obj2) ) $arr2 = $obj2->export();	
 	foreach ($arr1 as $key => $value) {		// ключи last_... не нужно сравнивать, поэтому удаляем
+		foreach ($regexp_ignore as $reg_key => $reg_value) {	// произвольные ключи, которые не надо сравнивать
+			if ( preg_match($reg_value, $key) ) unset($arr1[$key], $arr2[$key]);
+		}
 		if ( preg_match($regexp_last, $key, $matches) ) unset($arr1[$key], $arr2[$key]);
 		if ( preg_match($regexp_own, $key, $matches) ){
 			if ( $full == false ) unset($arr1[$key], $arr2[$key]);
@@ -633,17 +653,14 @@ function comp_obj( $obj1, $obj2 , $full=true ){
 			}
 		}
 	}
-	// v($full);
-	// v($arr1);
-	// v($arr2);
-	if ( count(array_diff($arr1, $arr2)) == 0 ){
+	if ( count(array_diff_assoc($arr1, $arr2)) == 0 ){
 		if ( $full ) {
 			foreach ($arr1 as $key => $value) {
 				if ( preg_match($regexp_own, $key, $matches) ){
 					$own_exists = true;
 					if ( is_array($arr1[$key]) && is_array($arr2[$key]) && count($arr1[$key]) == count($arr2[$key]) ){
 						for ($i=0; $i < count($arr1[$key]); $i++) { 
-							if ( count(array_diff($arr1[$key][$i], $arr2[$key][$i])) == 0 ) $own_equal_i++;
+							if ( count(array_diff_assoc($arr1[$key][$i], $arr2[$key][$i])) == 0 ) $own_equal_i++;
 						}
 						if ( $i == $own_equal_i ) $equal = true;
 					}
@@ -652,9 +669,6 @@ function comp_obj( $obj1, $obj2 , $full=true ){
 		}
 		if ( $own_exists == false) $equal = true;
 	}
-	// v($arr1);
-	// v($arr2);
-	// v($equal);
 	return $equal;
 }
 ?>

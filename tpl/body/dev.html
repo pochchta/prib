@@ -85,9 +85,9 @@
 	<button type="button" onCLick="save_form_dev(['m_table_row', 'r_table_row<?php echo $key?>'])">
 		<?php if ($settings->id) echo 'Сохранить'; else echo 'Создать'; ?>
 	</button>
-	<button type="button" onCLick="clear_form_dev()">
+<!-- 	<button type="button" onCLick="clear_form_dev()">
 		Очистить
-	</button>
+	</button> -->
 	<?php if ($double_item_exists){
 		$text = "создать";
 		if ($settings->id) $text = "сохранить";

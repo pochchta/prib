@@ -48,7 +48,8 @@
 		include 'tpl/message.html';		
 
 		// $item->ownRepairsList;
-		// v($item);
+		// v($item->ownRepairsList[13]->export());
+		// v($item->ownRepairsList[13]->export());
 		// v($_SESSION['POST']);
 		// v( dev_data_to_obj($_SESSION['POST']) );
 		// dev_data_to_obj($_SESSION['POST']);
