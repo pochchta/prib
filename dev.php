@@ -43,6 +43,11 @@
 			$double_item_exists = $out['double_item_exists'];
 		}
 
+		if ( count($item->ownRepairsList) == 0 ){
+			$item->ownRepairsList[] = R::dispense('repairs');
+		}
+
+
 		include 'tpl/head.html';
 		include 'tpl/errors.html';	
 		include 'tpl/message.html';		
@@ -50,7 +55,7 @@
 		// $item->ownRepairsList;
 		// v($item->ownRepairsList[13]->export());
 		// v($item->ownRepairsList[13]->export());
-		// v($_SESSION['POST']);
+		// vd($_SESSION['POST']);
 		// v( dev_data_to_obj($_SESSION['POST']) );
 		// dev_data_to_obj($_SESSION['POST']);
 

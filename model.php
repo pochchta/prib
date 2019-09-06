@@ -504,10 +504,10 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	// $data['m_name'] = htmlspecialchars( $data['m_name'] );
 	// $data['m_type'] = htmlspecialchars( $data['m_type'] );
 	// $data['m_number'] = htmlspecialchars( $data['m_number'] );
-	if ( $data['m_number'] == '' ) $errors[] = 'Номер - обязательное поле';
-	if ( mb_strlen($data['m_name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
-	if ( mb_strlen($data['m_type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
-	if ( mb_strlen($data['m_number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	if ( $data['m_number'] == '' ) $errors[] = 'Номер прибора - обязательное поле';
+	// if ( mb_strlen($data['m_name'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Название должно быть меньше '.LIMIT_DEV_TEXT.' символов';
+	// if ( mb_strlen($data['m_type'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Тип должен быть меньше '.LIMIT_DEV_TEXT.' символов';
+	// if ( mb_strlen($data['m_number'], 'utf8') > LIMIT_DEV_TEXT ) $errors[] = 'Номер должен быть меньше '.LIMIT_DEV_TEXT.' символов';
 	foreach ($data as $key => $value) {
 		if ( mb_strlen($value, 'utf8') > LIMIT_DEV_TEXT ){
 			$errors[] = 'Текст в ячейках должен быть меньше '.LIMIT_DEV_TEXT.' символов';
@@ -670,5 +670,11 @@ function comp_obj( $obj1, $obj2 , $full=true , $regexp_ignore=array() ){		// ful
 		if ( $own_exists == false) $equal = true;
 	}
 	return $equal;
+}
+
+function e( $var ){		// echo htmlspecialchars()
+	if ( isset($var) && is_string($var) ){
+		echo htmlspecialchars( $var );
+	}
 }
 ?>

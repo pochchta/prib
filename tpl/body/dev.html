@@ -13,10 +13,7 @@
 <?php if ( $item_exists ) : ?>
 <form action="/dev.php" id="form_dev" method="POST">	
 	<input type="hidden" id="do_change_data">
-	<input type="hidden" id="do_ignore_double" value="<?php if($double_item_exists) echo $item->number; else echo 'false' ?>">
-	<!-- <input type="hidden" name="name"> -->
-	<!-- <input type="hidden" name="type"> -->
-	<!-- <input type="hidden" name="number"> -->
+	<input type="hidden" id="do_ignore_double" value="<?php if($double_item_exists) e($item->number); else echo 'false' ?>">
 	<div class="table_edit">								<!-- главная таблица -->
 		<div class="row">
 			<div class="cell">Название</div>
@@ -28,11 +25,11 @@
 			<div class="cell">Автор последней правки</div>
 		</div>
 		<div class="row" id="m_table_row">
-			<div class="cell" contenteditable id="send_m_name"><?php if( isset($item->name) ) echo $item->name ?></div>
-			<div class="cell" contenteditable id="send_m_type"><?php if( isset($item->type) ) echo $item->type ?></div>
-			<div class="cell" contenteditable id="send_m_number"><?php if( isset($item->number) ) echo $item->number ?></div>
+			<div class="cell" contenteditable id="send_m_name"><?php e($item->name) ?></div>
+			<div class="cell" contenteditable id="send_m_type"><?php e($item->type) ?></div>
+			<div class="cell" contenteditable id="send_m_number"><?php e($item->number) ?></div>
 			<div class="cell">
-				<input type="date" name="m_date_release" <?php if(isset($item->date_release)) echo "value={$item->date_release}"?>>
+				<input type="date" name="m_date_release" <?php e($item->date_release) ?> >
 			</div>
 			<div class="cell">
 				<select name="m_state">
@@ -41,9 +38,9 @@
 				</select>
 			</div>			
 			<div class="cell">
-				<input type="date" value="<?php if( isset($item->last_date) ) echo $item->last_date ?>" disabled>
+				<input type="date" value="<?php e($item->last_date) ?>" disabled>
 			</div>
-			<div class="cell"><?php if( isset($item->last_author) ) echo $item->last_author ?></div>
+			<div class="cell"><?php e($item->last_author) ?></div>
 		</div>											   
 	</div>
 	<p></p>
@@ -59,11 +56,11 @@
 		</div>
 		<?php if (is_array($item->ownRepairsList)) foreach ($item->ownRepairsList as $key => $value): ?>
 			<div class="row" id="r_table_row<?php echo $key?>">
-				<input type="hidden" name="r_id<?php echo $key?>" value="<?php echo $value->id?>">
-				<div class="cell" contenteditable id="send_r_text<?php echo $key?>"><?php echo $value->text?></div>
-				<div class="cell" contenteditable id="send_r_parts<?php echo $key?>"><?php echo $value->parts?></div>
+				<input type="hidden" name="r_id<?php echo $key?>" value="<?php e($value->id) ?>">
+				<div class="cell" contenteditable id="send_r_text<?php echo $key?>"><?php e($value->text) ?></div>
+				<div class="cell" contenteditable id="send_r_parts<?php echo $key?>"><?php e($value->parts) ?></div>
 				<div class="cell">
-					<input type="date" name="r_date_release<?php echo $key?>" value="<?php echo $value->date_release?>">
+					<input type="date" name="r_date_release<?php echo $key?>" value="<?php e($value->date_release) ?>">
 				</div>
 				<div class="cell">
 					<select name="r_state<?php echo $key?>">
@@ -72,9 +69,9 @@
 					</select>
 				</div>
 				<div class="cell">
-					<input type="date" value="<?php echo $value->last_date?>" disabled>
+					<input type="date" value="<?php e($value->last_date) ?>" disabled>
 				</div>
-				<div class="cell" id="r_last_author<?php echo $key?>"><?php echo $value->last_author?></div>
+				<div class="cell" id="r_last_author<?php echo $key?>"><?php e($value->last_author) ?></div>
 			</div>
 		<?php endforeach ?>
 	</div>
@@ -88,6 +85,9 @@
 <!-- 	<button type="button" onCLick="clear_form_dev()">
 		Очистить
 	</button> -->
+	<button type="button" onCLick="location.href='<?php echo $address ?>'">
+		Не сохранять
+	</button>	
 	<?php if ($double_item_exists){
 		$text = "создать";
 		if ($settings->id) $text = "сохранить";
