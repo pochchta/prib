@@ -131,14 +131,12 @@ function elem_copy_clear( elem_id ){				// поиск последнего elem_
 	let elem = document.getElementById( elem_id );	// очистка (child, child.child) у кого есть id; сброс value, select
 	let parent = elem.parentElement;
 	let copy;
-	let last_elem;
 	let matches = elem_id.match( regexp );
 	for (let i = 0; i < parent.childNodes.length; i++) {     // поиск последнего id + "n"
 		if ( parent.childNodes[i].nodeName=="DIV" && parent.childNodes[i].hasAttribute('id') ){
 			if ( parent.childNodes[i].id.match(matches[1]) ){
-				elem = parent.childNodes[i];
-				if ( i < parent.childNodes.length - 1 ) last_elem = parent.childNodes[i+1];
-				else last_elem = 0;
+				if ( Number(elem.id.match(regexp)[2]) < Number(parent.childNodes[i].id.match(regexp)[2]) )
+					elem = parent.childNodes[i];
 			}
 		}
 	}
@@ -180,8 +178,7 @@ function elem_copy_clear( elem_id ){				// поиск последнего elem_
 			}
 		} 
 	}
-	if ( last_elem ) parent.insertBefore(copy, last_elem);
-	else parent.appendChild(copy);
+	parent.appendChild(copy);
 }
 function create_inputs_send( parent_id ){	// создание input для childs (id=send_...) для соседних parent_id[0-9]*
 	const ARR_PAR_MAX_LENGTH = 999;		// лимит, т.к. узлы добавляются во время прохода по ним же
