@@ -78,9 +78,9 @@ class table_settings{
 	var $page;
 	var $sort;
 	var $desc;
-	var $find_form;
-	var $where;		    // запрос вида "where name like ?"
-	var $arr_where;		// массив для этого запроса
+	var $find_form = array();
+	var $where;		    		// запрос вида "where name like ?"
+	var $arr_where = array();	// массив для этого запроса
 	var $message;
 	var $out;
 	function table_settings() {
@@ -88,14 +88,14 @@ class table_settings{
 		$this->page = 0;
 		$this->sort = 'id';						// сортировка по id
 		$this->desc = '';						// обратная сортировка выключена
-		$this->find_form[0] = array('id', '');		// массив для сохранения данных из формы поиска
+		$this->find_form[0] = array('id', '');	// массив для сохранения данных из формы поиска
 		$this->where = '';
 		$this->arr_where = array();
 	}
 }
 class item_settings{
 	var $id;
-	var $test_double;
+	var $test_double;			// проверка дублей номеров
 	function item_settings(){
 		$this->id = 0;
 		$this->test_double = true;
@@ -222,7 +222,7 @@ function check_numeric( $num ){		// проверка на целое полож�
 	}
 	return $out;
 }
-function check_like_query( $s , $table_name ){
+function check_like_query( $s , $table_name ){		// проверка на допустимость символов в строке поиска
 	$out = false;
     if ( trim($s) != '' )
 		switch ( $table_name ) {
@@ -401,7 +401,7 @@ function find_fields( $data , $table_name ){		// поиск в таблице (P
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 	// return $out;
 }
-function list_fields( $table_name ){
+function list_fields( $table_name ){	// поиск с сортировкой; возвращает страницу записей с пагинацией
 	$count = R::count($table_name, "{$_SESSION['set_list'][$table_name]->where}", $_SESSION['set_list'][$table_name]->arr_where);
 	$page = $_SESSION['set_list'][$table_name]->page;
 	$limit = $_SESSION['set_list'][$table_name]->limit;
@@ -426,7 +426,7 @@ function list_fields( $table_name ){
 	else $out['next'] = false;	
 	return $out;
 }
-function one_item( $id , $table_name , $own_tables=array() ){
+function one_item( $id , $table_name , $own_tables=array() ){	// возвращает один bean; можно подгрузить связанные подэлементы
 	if ( check_numeric($id) ){
 		$item = R::load( $table_name , $id );
 		if ( $item->id ) {
@@ -584,8 +584,8 @@ function change_dev_data( $data , $table_name , $id , $test_double ){
 	$_SESSION['errors'] = array_merge( $_SESSION['errors'] , $errors );
 	return array( 'changed' => ! empty($errors) , 'double_item_exists' => $double_item_exists , 'item' => $item);
 }
-function dev_data_to_obj( $data , $id ){	// , & $errors=NULL 
-	global $arr_fields;		// допустимые поля таблиц, важен порядок
+function dev_data_to_obj( $data , $id ){	// массив полей в объекты
+	global $arr_fields;		// допустимые поля таблиц, важен порядок (первый и последний элемент)
 	// $errors = array();
 	$dev;
 	$repair;
@@ -614,7 +614,7 @@ function dev_data_to_obj( $data , $id ){	// , & $errors=NULL
 					$repair->$matches[1] = $value;
 				}
 				if ( $matches[1] == $arr_fields['repairs'][count($arr_fields['repairs']) - 1] ) {
-					if ( $not_empty_count >= $arr_fields['min_fields']['repairs'] && $repair->id == 0 ){// запись по последнему элементу
+					if ( $not_empty_count >= $arr_fields['min_fields']['repairs'] && $repair->id == 0 ){ // запись по последнему элементу
 						$dev->ownRepairsList[] = $repair;						
 					}
 				}
@@ -627,7 +627,7 @@ function dev_data_to_obj( $data , $id ){	// , & $errors=NULL
 	}
 	return $dev;
 }
-function comp_obj( $obj1, $obj2 , $full=true , $regexp_ignore=array() ){		// full - с учетом own...List[]
+function comp_obj( $obj1, $obj2 , $full=true , $regexp_ignore=array() ){	// сравнение бинов, full - с учетом own...List[]
 	$equal = false;
 	$own_exists = false;
 	$own_equal_i = 0;
